@@ -1,0 +1,1482 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EasyWritedown – Share Documents Instantly</title>
+  <meta name="description"
+    content="EasyWrite lets you publish PDFs and PowerPoint files instantly on a named page. Simple, clean, and distraction-free." />
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex" />
+  <meta name="google" content="notranslate, nosnippet" />
+  <link rel="icon" type="image/png" href="icon.png" />
+  <link rel="apple-touch-icon" href="icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* ── Light mode (default) ── */
+    :root {
+      --bg: #ffffff;
+      --surface: #f7f7f7;
+      --surface2: #ededed;
+      --border: #cccccc;
+      --border-hover: #777777;
+      --text: #111111;
+      --text-muted: #555555;
+      --text-dim: #777777;
+      --accent: #000000;
+      --radius: 8px;
+      --radius-lg: 14px;
+      --transition: 0.18s ease;
+      --grid-line: rgba(0, 0, 0, 0.06);
+      --scrollbar-thumb: #bbb;
+      --modal-bg: rgba(255, 255, 255, 0.85);
+      --shadow: 0 4px 32px rgba(0, 0, 0, 0.08);
+
+      /* High-contrast Input Variables */
+      --input-bg: #f4f4f4;
+      --input-border: #777777;
+      --input-placeholder: #555555;
+      --input-text: #000000;
+      --input-focus: #000000;
+
+      /* Icon Symbol (White in White mode) */
+      --icon-bg: #ffffff;
+      --icon-border: #111111;
+      --icon-stroke: #111111;
+    }
+
+    /* ── Dark mode ── */
+    html.dark {
+      --bg: #0a0a0a;
+      --surface: #111111;
+      --surface2: #1a1a1a;
+      --border: #2a2a2a;
+      --border-hover: #444444;
+      --text: #f0f0f0;
+      --text-muted: #888888;
+      --text-dim: #555555;
+      --accent: #ffffff;
+      --grid-line: rgba(255, 255, 255, 0.03);
+      --scrollbar-thumb: #333;
+      --modal-bg: rgba(0, 0, 0, 0.75);
+      --shadow: 0 4px 32px rgba(0, 0, 0, 0.5);
+
+      /* High-contrast Input Variables */
+      --input-bg: #141414;
+      --input-border: #444444;
+      --input-placeholder: #888888;
+      --input-text: #ffffff;
+      --input-focus: #ffffff;
+
+      /* Icon Symbol (Dark in Dark mode) */
+      --icon-bg: #111111;
+      --icon-border: #333333;
+      --icon-stroke: #ffffff;
+    }
+
+    html,
+    body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--scrollbar-thumb);
+      border-radius: 99px;
+    }
+
+    /* HOME */
+    #homeScreen {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #homeScreen::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--grid-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+    }
+
+    .home-inner {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 520px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 48px;
+    }
+
+    .logo-block {
+      text-align: center;
+    }
+
+    .logo-block h1 {
+      font-size: 3.5rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--text);
+    }
+
+    /* ── Theme toggle button ── */
+    .theme-toggle {
+      position: fixed;
+      top: 18px;
+      right: 22px;
+      z-index: 200;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 50px;
+      padding: 7px 14px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      transition: background var(--transition), border-color var(--transition), color var(--transition), box-shadow var(--transition);
+      user-select: none;
+      box-shadow: var(--shadow);
+    }
+
+    .theme-toggle:hover {
+      border-color: var(--border-hover);
+      color: var(--text);
+    }
+
+    .theme-toggle svg {
+      width: 15px;
+      height: 15px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0;
+    }
+
+    .toggle-icon-sun,
+    .toggle-icon-moon {
+      display: none;
+    }
+
+    html:not(.dark) .toggle-icon-sun {
+      display: block;
+    }
+
+    html.dark .toggle-icon-moon {
+      display: block;
+    }
+
+    html:not(.dark) .toggle-label::after {
+      content: 'Dark mode';
+    }
+
+    html.dark .toggle-label::after {
+      content: 'Light mode';
+    }
+
+    .logo-block h1 span {
+      color: var(--text-muted);
+    }
+
+    .logo-block p {
+      margin-top: 10px;
+      font-size: 0.95rem;
+      color: var(--text-muted);
+    }
+
+    .options-grid {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+      max-width: 320px;
+    }
+
+    .option-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 32px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      cursor: pointer;
+      transition: border-color var(--transition), background var(--transition), transform var(--transition);
+      position: relative;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    .option-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.04), transparent);
+      opacity: 0;
+      transition: opacity var(--transition);
+    }
+
+    .option-card:hover {
+      border-color: var(--border-hover);
+      background: var(--surface2);
+      transform: translateY(-2px);
+    }
+
+    .option-card:hover::after {
+      opacity: 1;
+    }
+
+    .option-card:active {
+      transform: translateY(0);
+    }
+
+    .option-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 12px;
+      background: var(--icon-bg);
+      border: 2px solid var(--icon-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background var(--transition), border-color var(--transition);
+    }
+
+    .option-icon svg {
+      width: 24px;
+      height: 24px;
+      stroke: var(--icon-stroke);
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: stroke var(--transition);
+    }
+
+    .option-label {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+      text-align: center;
+    }
+
+    .option-desc {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    .divider {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      color: var(--text-dim);
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .goto-block {
+      width: 100%;
+      display: flex;
+      gap: 10px;
+    }
+
+    .goto-block input {
+      flex: 1;
+      background: var(--input-bg);
+      border: 2px solid var(--input-border);
+      border-radius: var(--radius);
+      color: var(--input-text);
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 500;
+      padding: 13px 16px;
+      outline: none;
+      transition: border-color var(--transition), background var(--transition);
+    }
+
+    .goto-block input::placeholder {
+      color: var(--input-placeholder);
+      font-weight: 400;
+    }
+
+    .goto-block input:focus {
+      border-color: var(--input-focus);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: none;
+      border-radius: var(--radius);
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background var(--transition), color var(--transition), transform var(--transition);
+      padding: 13px 22px;
+      user-select: none;
+    }
+
+    .btn-white {
+      background: var(--text);
+      color: var(--bg);
+      border: 1px solid var(--text);
+    }
+
+    .btn-white:hover {
+      opacity: 0.88;
+    }
+
+    .btn-white:active {
+      transform: scale(0.97);
+    }
+
+    .btn-white:disabled {
+      background: var(--surface2);
+      color: var(--text-dim);
+      border-color: var(--border);
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-outline:hover {
+      border-color: #555;
+      background: var(--surface2);
+    }
+
+    .home-footer {
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .footer-links {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .footer-links a {
+      color: var(--text-muted);
+      text-decoration: underline;
+      cursor: pointer;
+      transition: color var(--transition);
+    }
+
+    .footer-links a:hover {
+      color: var(--text);
+    }
+
+    /* MODAL */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(6px);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.22s ease;
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 460px;
+      padding: 36px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      transform: translateY(12px) scale(0.98);
+      transition: transform 0.22s ease;
+    }
+
+    .modal-overlay.open .modal {
+      transform: translateY(0) scale(1);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .modal-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .modal-sub {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 4px;
+      line-height: 1;
+      font-size: 1.3rem;
+      transition: color var(--transition);
+    }
+
+    .modal-close:hover {
+      color: var(--text);
+    }
+
+    /* Drop zone */
+    .drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius-lg);
+      padding: 40px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color var(--transition), background var(--transition);
+      position: relative;
+    }
+
+    .drop-zone:hover,
+    .drop-zone.drag-over {
+      border-color: #555;
+      background: var(--surface2);
+    }
+
+    .drop-zone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+
+    .drop-icon {
+      margin-bottom: 12px;
+    }
+
+    .drop-icon svg {
+      width: 36px;
+      height: 36px;
+      stroke: #555;
+      fill: none;
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .drop-label {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .drop-hint {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    /* File preview */
+    .file-preview {
+      display: none;
+      align-items: center;
+      gap: 14px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+    }
+
+    .file-preview.visible {
+      display: flex;
+    }
+
+    .file-type-badge {
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      background: var(--icon-bg);
+      color: var(--text);
+      border: 1.5px solid var(--icon-border);
+      transition: background var(--transition), color var(--transition), border-color var(--transition);
+    }
+
+    .badge-pdf,
+    .badge-ppt {
+      background: var(--icon-bg);
+      color: var(--text);
+      border: 1.5px solid var(--icon-border);
+    }
+
+    .file-name {
+      font-size: 0.88rem;
+      color: var(--text);
+      font-weight: 500;
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .file-size {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    /* Publish section */
+    .publish-section {
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .publish-section.visible {
+      display: flex;
+    }
+
+    .input-label {
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+    }
+
+    .text-input {
+      background: var(--input-bg);
+      border: 2px solid var(--input-border);
+      border-radius: var(--radius);
+      color: var(--input-text);
+      font-family: 'Inter', monospace;
+      font-size: 0.95rem;
+      font-weight: 500;
+      padding: 12px 16px;
+      outline: none;
+      width: 100%;
+      transition: border-color var(--transition);
+    }
+
+    .text-input:focus {
+      border-color: var(--input-focus);
+    }
+
+    .text-input::placeholder {
+      color: var(--input-placeholder);
+      font-weight: 400;
+    }
+
+    .url-preview {
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      font-family: monospace;
+    }
+
+    .url-preview span {
+      color: var(--text-muted);
+    }
+
+    /* Progress */
+    .progress-bar-wrap {
+      background: var(--border);
+      border-radius: 99px;
+      height: 3px;
+      overflow: hidden;
+      display: none;
+    }
+
+    .progress-bar-wrap.visible {
+      display: block;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: #fff;
+      width: 0%;
+      transition: width 0.3s ease;
+      border-radius: 99px;
+    }
+
+    .status-msg {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      text-align: center;
+      min-height: 18px;
+    }
+
+    .status-msg.error {
+      color: #ff6b6b;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    /* VIEWER */
+    #viewerScreen {
+      display: none;
+      min-height: 100vh;
+      flex-direction: column;
+      background: var(--bg);
+    }
+
+    .viewer-header {
+      padding: 18px 32px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+      backdrop-filter: blur(10px);
+      z-index: 10;
+    }
+
+    .viewer-logo {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .viewer-logo span {
+      color: var(--text-muted);
+    }
+
+    .viewer-page-name {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-family: monospace;
+      padding: 4px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+
+    .viewer-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px 60px;
+      gap: 12px;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .viewer-body-scroll {
+      pointer-events: none;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .page-canvas {
+      display: block;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      max-width: 860px;
+      width: 100%;
+      background: #fff;
+      box-shadow: 0 4px 32px rgba(0, 0, 0, 0.5);
+    }
+
+    .viewer-loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      min-height: 300px;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .spinner {
+      width: 28px;
+      height: 28px;
+      border: 2px solid var(--border);
+      border-top-color: var(--text);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .not-found-msg {
+      text-align: center;
+      padding: 100px 20px;
+      color: var(--text-muted);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .not-found-msg h2 {
+      font-size: 2.2rem;
+      font-weight: 900;
+      letter-spacing: 0.05em;
+      color: var(--text);
+      text-transform: uppercase;
+    }
+
+    .not-found-msg p {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+    }
+
+    .page-counter {
+      font-size: 0.82rem;
+      color: var(--text-dim);
+      text-align: center;
+      pointer-events: none;
+    }
+
+    /* PPT container */
+    #pptContainer .viewer-body-scroll {
+      pointer-events: none;
+    }
+
+    .ppt-notice {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      padding: 12px 20px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface);
+      pointer-events: none;
+      max-width: 860px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .ppt-iframe-wrap {
+      position: relative;
+      width: 100%;
+      max-width: 860px;
+    }
+
+    .ppt-iframe-wrap iframe {
+      width: 100%;
+      height: 75vh;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      background: #fff;
+      display: block;
+    }
+
+    .ppt-blocker {
+      position: absolute;
+      inset: 0;
+      z-index: 999;
+      background: transparent;
+      cursor: default;
+    }
+
+    @media (max-width: 500px) {
+      .options-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .logo-block h1 {
+        font-size: 2.2rem;
+      }
+
+      .modal {
+        padding: 28px 20px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- HOME -->
+  <div id="homeScreen">
+    <div class="home-inner">
+
+      <div class="logo-block">
+        <h1>Easy<span>Writedown</span></h1>
+        <p>Publish documents instantly. Share with a page name.</p>
+      </div>
+
+      <div class="options-grid">
+        <div class="option-card" id="uploadCard" role="button" tabindex="0" aria-label="Upload a file">
+          <div class="option-icon">
+            <svg viewBox="0 0 24 24">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+          </div>
+          <div class="option-label">Upload File</div>
+          <div class="option-desc">Publish a PDF or PowerPoint and get a shareable page</div>
+        </div>
+      </div>
+
+      <div class="divider">or go directly to a page</div>
+
+      <div class="goto-block">
+        <input type="text" id="pageNameInput" placeholder="Enter page name…" autocomplete="off" spellcheck="false" />
+        <button class="btn btn-white" id="gotoBtn">Go</button>
+      </div>
+
+      <div class="home-footer">
+        <div>Files are stored locally in your browser · No servers, no tracking</div>
+        <div class="footer-links">
+          <a id="privacyLink">Privacy Policy</a>
+          <span>·</span>
+          <a id="termsLink">Terms of Service</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- UPLOAD MODAL -->
+  <div class="modal-overlay" id="uploadModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title" id="modalTitle">Upload Document</div>
+          <div class="modal-sub">PDF or PowerPoint files only (max 10 MB)</div>
+        </div>
+        <button class="modal-close" id="modalClose" aria-label="Close">&#x2715;</button>
+      </div>
+
+      <div class="drop-zone" id="dropZone">
+        <input type="file" id="fileInput" accept=".pdf,.ppt,.pptx" />
+        <div class="drop-icon">
+          <svg viewBox="0 0 24 24">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="12" y1="11" x2="12" y2="17" />
+            <line x1="9" y1="14" x2="15" y2="14" />
+          </svg>
+        </div>
+        <div class="drop-label">Drop your file here</div>
+        <div class="drop-hint">or click to browse — .pdf, .ppt, .pptx accepted (max 10 MB)</div>
+      </div>
+
+      <div class="file-preview" id="filePreview">
+        <div class="file-type-badge" id="fileBadge">PDF</div>
+        <div class="file-name" id="fileName">document.pdf</div>
+        <div class="file-size" id="fileSize">0 KB</div>
+      </div>
+
+      <div class="publish-section" id="publishSection">
+        <div class="input-label">Page name</div>
+        <input type="text" class="text-input" id="publishPageName" placeholder="e.g. my-report-2024" autocomplete="off"
+          spellcheck="false" />
+        <div class="url-preview">easywritedown.com/<span id="urlPreviewSlug">your-page-name</span></div>
+      </div>
+
+      <div class="progress-bar-wrap" id="progressWrap">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+
+      <div class="status-msg" id="statusMsg"></div>
+
+      <div class="modal-actions" id="modalActions">
+        <button class="btn btn-outline" id="cancelBtn">Cancel</button>
+        <button class="btn btn-white" id="publishBtn" disabled>Publish</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIEWER -->
+  <div id="viewerScreen">
+    <div class="viewer-header">
+      <div class="viewer-logo" id="viewerLogoLink">Easy<span>Writedown</span></div>
+      <div class="viewer-page-name" id="viewerPageLabel"></div>
+    </div>
+
+    <div class="viewer-loading" id="viewerLoading">
+      <div class="spinner"></div>
+      <span>Loading document…</span>
+    </div>
+
+    <div class="not-found-msg" id="notFoundMsg" style="display:none;">
+      <h2>NO DATA FOUND</h2>
+      <p id="notFoundSubtext">No document has been published at this page name.</p>
+      <div style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 12px;">
+        <button class="btn btn-white" id="createPageBtn">&#x2B06; Upload File for This Page</button>
+        <button class="btn btn-outline" id="goHomeLink">&#x2190; Return to Homepage</button>
+      </div>
+    </div>
+
+    <div class="viewer-body" id="pdfContainer" style="display:none;">
+      <div class="viewer-body-scroll" id="pdfPages"></div>
+    </div>
+
+    <div class="viewer-body" id="pptContainer" style="display:none;">
+      <div class="viewer-body-scroll" id="pptPages"></div>
+    </div>
+  </div>
+
+  <!-- PRIVACY POLICY MODAL -->
+  <div class="modal-overlay" id="privacyModal" role="dialog" aria-modal="true" aria-labelledby="privacyTitle">
+    <div class="modal" style="max-width: 540px;">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title" id="privacyTitle">Privacy Policy</div>
+          <div class="modal-sub">EasyWritedown Privacy Commitments</div>
+        </div>
+        <button class="modal-close" id="privacyClose" aria-label="Close">&#x2715;</button>
+      </div>
+      <div style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.6; display: flex; flex-direction: column; gap: 12px; max-height: 60vh; overflow-y: auto;">
+        <p><strong>1. Local Browser Storage</strong><br/>EasyWritedown operates strictly inside your web browser. All uploaded files (PDFs and PowerPoint presentations) are converted and stored locally on your device using IndexedDB.</p>
+        <p><strong>2. No Remote Server Uploads</strong><br/>We do not transmit, upload, host, or store any of your documents or personal data on remote cloud servers.</p>
+        <p><strong>3. Zero Tracking & Cookies</strong><br/>EasyWritedown does not use tracking cookies, analytics scripts, or third-party advertising trackers.</p>
+        <p><strong>4. Data Control</strong><br/>You have full control over your stored documents. Clearing your browser data or IndexedDB storage removes all saved pages immediately.</p>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-white" id="privacyOkBtn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TERMS OF SERVICE MODAL -->
+  <div class="modal-overlay" id="termsModal" role="dialog" aria-modal="true" aria-labelledby="termsTitle">
+    <div class="modal" style="max-width: 540px;">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title" id="termsTitle">Terms of Service</div>
+          <div class="modal-sub">EasyWritedown User Terms</div>
+        </div>
+        <button class="modal-close" id="termsClose" aria-label="Close">&#x2715;</button>
+      </div>
+      <div style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.6; display: flex; flex-direction: column; gap: 12px; max-height: 60vh; overflow-y: auto;">
+        <p><strong>1. Acceptance of Terms</strong><br/>By using EasyWritedown, you agree to these Terms of Service. If you do not agree, please discontinue use.</p>
+        <p><strong>2. User Content Responsibility</strong><br/>You are solely responsible for the documents you choose to store and view on your device. Do not use EasyWritedown for unlawful or copyright-infringing content.</p>
+        <p><strong>3. Service Provision</strong><br/>EasyWritedown is provided "as is" without warranties of any kind. As files are stored locally in browser storage, retention depends on your device configuration.</p>
+        <p><strong>4. Intellectual Property</strong><br/>All original branding and code belong to EasyWritedown. Document content rights remain entirely with the respective document owner.</p>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-white" id="termsOkBtn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Theme toggle (global, floats over both screens) -->
+  <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+    <!-- Sun icon -->
+    <svg class="toggle-icon-sun" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="5" />
+      <line x1="12" y1="1" x2="12" y2="3" />
+      <line x1="12" y1="21" x2="12" y2="23" />
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+      <line x1="1" y1="12" x2="3" y2="12" />
+      <line x1="21" y1="12" x2="23" y2="12" />
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+    </svg>
+    <!-- Moon icon -->
+    <svg class="toggle-icon-moon" viewBox="0 0 24 24">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+    </svg>
+    <span class="toggle-label"></span>
+  </button>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    // ── Theme toggle ──────────────────────────────────────────────
+    (function () {
+      const saved = localStorage.getItem('ew-theme');
+      if (saved === 'dark') document.documentElement.classList.add('dark');
+    })();
+
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      const isDark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('ew-theme', isDark ? 'dark' : 'light');
+    });
+
+    // PDF.js worker
+    if (typeof pdfjsLib !== 'undefined') {
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+
+    // ── IndexedDB ─────────────────────────────────────────────────
+    const DB_NAME = 'EasyWriteDB', STORE = 'pages';
+
+    function openDB() {
+      return new Promise((res, rej) => {
+        const r = indexedDB.open(DB_NAME, 1);
+        r.onupgradeneeded = e => {
+          if (!e.target.result.objectStoreNames.contains(STORE))
+            e.target.result.createObjectStore(STORE, { keyPath: 'pageName' });
+        };
+        r.onsuccess = e => res(e.target.result);
+        r.onerror = () => rej(r.error);
+      });
+    }
+    async function savePage(name, data, type) {
+      const db = await openDB();
+      return new Promise((res, rej) => {
+        const tx = db.transaction(STORE, 'readwrite');
+        tx.objectStore(STORE).put({ pageName: name, fileData: data, fileType: type });
+        tx.oncomplete = res; tx.onerror = () => rej(tx.error);
+      });
+    }
+    async function getPage(name) {
+      const db = await openDB();
+      return new Promise((res, rej) => {
+        const req = db.transaction(STORE, 'readonly').objectStore(STORE).get(name);
+        req.onsuccess = () => res(req.result);
+        req.onerror = () => rej(req.error);
+      });
+    }
+
+    // ── Routing (Clean path URL + Hash fallback) ─────────────────────
+    const homeScreen = document.getElementById('homeScreen');
+    const viewerScreen = document.getElementById('viewerScreen');
+
+    function getPageFromUrl() {
+      // 1. Check Query string (e.g. index.html?anypage or domain.com/?anypage)
+      const search = location.search.replace(/^\?/, '').trim();
+      if (search) {
+        const queryVal = search.split('&')[0].replace(/^(p|page)=/i, '');
+        const slug = slugify(decodeURIComponent(queryVal));
+        if (slug && slug !== 'index-html') return slug;
+      }
+
+      // 2. Check Hash (e.g. index.html#anypage or domain.com/#anypage)
+      const hash = location.hash.replace('#', '').trim();
+      if (hash) {
+        const slug = slugify(decodeURIComponent(hash));
+        if (slug) return slug;
+      }
+
+      // 3. Check Pathname (e.g. domain.com/anypage)
+      let rawPath = decodeURIComponent(location.pathname);
+      rawPath = rawPath.replace(/\/index\.html?$/i, '').replace(/^\/+|\/+$/g, '');
+      if (rawPath) {
+        const parts = rawPath.split('/');
+        const lastPart = parts[parts.length - 1];
+        if (lastPart && !lastPart.includes('.') && !/^[a-zA-Z]:$/.test(lastPart)) {
+          const slug = slugify(lastPart);
+          if (slug) return slug;
+        }
+      }
+
+      return null;
+    }
+
+    function showHome() {
+      homeScreen.style.display = 'flex';
+      viewerScreen.style.display = 'none';
+      document.title = 'EasyWritedown – Share Documents Instantly';
+      document.removeEventListener('keydown', blockShortcuts, true);
+    }
+    function showViewer() {
+      homeScreen.style.display = 'none';
+      viewerScreen.style.display = 'flex';
+    }
+
+    function navigateTo(name) {
+      if (location.protocol === 'file:') {
+        location.hash = name;
+      } else {
+        history.pushState({ page: name }, '', '/' + name);
+        route();
+      }
+    }
+
+    function goHome() {
+      if (location.protocol === 'file:') {
+        location.hash = '';
+      } else {
+        history.pushState({}, '', '/');
+      }
+      showHome();
+    }
+
+    window.addEventListener('popstate', route);
+    window.addEventListener('hashchange', route);
+    window.addEventListener('load', route);
+
+    function route() {
+      const p = getPageFromUrl();
+      p ? loadPage(p) : showHome();
+    }
+
+    // ── Home interactions ─────────────────────────────────────────
+    document.getElementById('uploadCard').addEventListener('click', openModal);
+    document.getElementById('uploadCard').addEventListener('keydown', e => e.key === 'Enter' && openModal());
+    const vCard = document.getElementById('viewCard');
+    if (vCard) vCard.addEventListener('click', () => document.getElementById('pageNameInput').focus());
+    // Privacy & Terms Modal Listeners
+    const privacyModal = document.getElementById('privacyModal');
+    const termsModal = document.getElementById('termsModal');
+
+    document.getElementById('privacyLink').addEventListener('click', () => privacyModal.classList.add('open'));
+    document.getElementById('privacyClose').addEventListener('click', () => privacyModal.classList.remove('open'));
+    document.getElementById('privacyOkBtn').addEventListener('click', () => privacyModal.classList.remove('open'));
+    privacyModal.addEventListener('click', e => { if (e.target === privacyModal) privacyModal.classList.remove('open'); });
+
+    document.getElementById('termsLink').addEventListener('click', () => termsModal.classList.add('open'));
+    document.getElementById('termsClose').addEventListener('click', () => termsModal.classList.remove('open'));
+    document.getElementById('termsOkBtn').addEventListener('click', () => termsModal.classList.remove('open'));
+    termsModal.addEventListener('click', e => { if (e.target === termsModal) termsModal.classList.remove('open'); });
+
+    document.getElementById('gotoBtn').addEventListener('click', gotoPage);
+    document.getElementById('pageNameInput').addEventListener('keydown', e => e.key === 'Enter' && gotoPage());
+    document.getElementById('goHomeLink').addEventListener('click', goHome);
+    document.getElementById('viewerLogoLink').addEventListener('click', goHome);
+
+    function gotoPage() {
+      const v = document.getElementById('pageNameInput').value.trim();
+      if (!v) return;
+      navigateTo(slugify(v));
+    }
+
+    // ── Modal ─────────────────────────────────────────────────────
+    const uploadModal = document.getElementById('uploadModal');
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const filePreview = document.getElementById('filePreview');
+    const fileBadge = document.getElementById('fileBadge');
+    const fileNameEl = document.getElementById('fileName');
+    const fileSizeEl = document.getElementById('fileSize');
+    const publishSection = document.getElementById('publishSection');
+    const publishPageName = document.getElementById('publishPageName');
+    const urlPreviewSlug = document.getElementById('urlPreviewSlug');
+    const publishBtn = document.getElementById('publishBtn');
+    const progressWrap = document.getElementById('progressWrap');
+    const progressBar = document.getElementById('progressBar');
+    const statusMsg = document.getElementById('statusMsg');
+    const modalActions = document.getElementById('modalActions');
+
+    let selectedFile = null;
+
+    document.getElementById('modalClose').addEventListener('click', closeModal);
+    document.getElementById('cancelBtn').addEventListener('click', closeModal);
+    uploadModal.addEventListener('click', e => { if (e.target === uploadModal) closeModal(); });
+
+    function openModal(prefill) {
+      resetModal();
+      if (prefill && typeof prefill === 'string') {
+        publishPageName.value = prefill;
+        urlPreviewSlug.textContent = slugify(prefill) || 'your-page-name';
+      }
+      uploadModal.classList.add('open');
+    }
+    function closeModal() { uploadModal.classList.remove('open'); }
+
+    function resetModal() {
+      selectedFile = null;
+      fileInput.value = '';
+      filePreview.classList.remove('visible');
+      publishSection.classList.remove('visible');
+      publishPageName.value = '';
+      urlPreviewSlug.textContent = 'your-page-name';
+      publishBtn.disabled = true;
+      progressWrap.classList.remove('visible');
+      progressBar.style.width = '0%';
+      statusMsg.textContent = '';
+      statusMsg.classList.remove('error');
+      modalActions.style.display = 'flex';
+    }
+
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+    dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('drag-over'); if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+    fileInput.addEventListener('change', () => { if (fileInput.files[0]) handleFile(fileInput.files[0]); });
+
+    function handleFile(file) {
+      const ext = file.name.split('.').pop().toLowerCase();
+      if (!['pdf', 'ppt', 'pptx'].includes(ext)) { setStatus('Only PDF and PowerPoint files are allowed.', true); return; }
+      if (file.size > 10 * 1024 * 1024) {
+        setStatus('File size exceeds the 10 MB limit. Please select a smaller file.', true);
+        fileInput.value = '';
+        return;
+      }
+      selectedFile = file;
+      setStatus('', false);
+      fileBadge.textContent = ext.toUpperCase();
+      fileBadge.className = 'file-type-badge ' + (ext === 'pdf' ? 'badge-pdf' : 'badge-ppt');
+      fileNameEl.textContent = file.name;
+      fileSizeEl.textContent = fmtBytes(file.size);
+      filePreview.classList.add('visible');
+      publishSection.classList.add('visible');
+      publishBtn.disabled = false;
+    }
+
+    publishPageName.addEventListener('input', () => {
+      urlPreviewSlug.textContent = slugify(publishPageName.value) || 'your-page-name';
+    });
+
+    publishBtn.addEventListener('click', async () => {
+      const rawName = publishPageName.value.trim();
+      if (!rawName) { setStatus('Please enter a page name.', true); return; }
+      if (!selectedFile) { setStatus('Please select a file first.', true); return; }
+      const pageName = slugify(rawName);
+      if (!pageName) { setStatus('Page name must contain at least one letter or number.', true); return; }
+
+      publishBtn.disabled = true;
+      modalActions.style.display = 'none';
+      progressWrap.classList.add('visible');
+      setStatus('Reading file…', false);
+
+      try {
+        const buf = await readAsArrayBuffer(selectedFile, p => { progressBar.style.width = (p * 80) + '%'; });
+        progressBar.style.width = '90%';
+        setStatus('Saving…', false);
+        const ext = selectedFile.name.split('.').pop().toLowerCase();
+        await savePage(pageName, ab2b64(buf), ext);
+        progressBar.style.width = '100%';
+        setStatus('Published! Redirecting…', false);
+        setTimeout(() => { closeModal(); navigateTo(pageName); }, 700);
+      } catch (err) {
+        console.error(err);
+        setStatus('Error: ' + err.message, true);
+        publishBtn.disabled = false;
+        modalActions.style.display = 'flex';
+        progressWrap.classList.remove('visible');
+      }
+    });
+
+    function setStatus(msg, isErr) {
+      statusMsg.textContent = msg;
+      statusMsg.classList.toggle('error', isErr);
+    }
+
+    // ── Viewer ────────────────────────────────────────────────────
+    const viewerLoading = document.getElementById('viewerLoading');
+    const notFoundMsg = document.getElementById('notFoundMsg');
+    const pdfContainer = document.getElementById('pdfContainer');
+    const pdfPages = document.getElementById('pdfPages');
+    const pptContainer = document.getElementById('pptContainer');
+    const pptPages = document.getElementById('pptPages');
+
+    async function loadPage(pageName) {
+      showViewer();
+      document.getElementById('viewerPageLabel').textContent = pageName;
+      document.title = pageName + ' — EasyWritedown';
+
+      viewerLoading.style.display = 'flex';
+      notFoundMsg.style.display = 'none';
+      pdfContainer.style.display = 'none';
+      pptContainer.style.display = 'none';
+      pdfPages.innerHTML = '';
+      pptPages.innerHTML = '';
+
+      let data;
+      try { data = await getPage(pageName); } catch (e) { data = null; }
+
+      if (!data) {
+        viewerLoading.style.display = 'none';
+        notFoundMsg.style.display = 'flex';
+        const sub = document.getElementById('notFoundSubtext');
+        if (sub) sub.textContent = `No document has been published at "/${pageName}" yet.`;
+        const createBtn = document.getElementById('createPageBtn');
+        if (createBtn) createBtn.onclick = () => openModal(pageName);
+        return;
+      }
+
+      // Block copy/print shortcuts globally while viewer is open
+      document.addEventListener('keydown', blockShortcuts, true);
+      document.addEventListener('contextmenu', blockContext, true);
+
+      if (data.fileType === 'pdf') {
+        await renderPDF(data.fileData);
+      } else {
+        await renderPPT(data.fileData, data.fileType);
+      }
+    }
+
+    async function renderPDF(b64) {
+      const buf = b642ab(b64);
+      const pdfDoc = await pdfjsLib.getDocument({ data: buf }).promise;
+      const total = pdfDoc.numPages;
+
+      viewerLoading.style.display = 'none';
+      pdfContainer.style.display = 'flex';
+
+      const scale = window.innerWidth < 600 ? 1.0 : window.innerWidth < 900 ? 1.4 : 1.8;
+
+      for (let i = 1; i <= total; i++) {
+        const page = await pdfDoc.getPage(i);
+        const viewport = page.getViewport({ scale });
+        const canvas = document.createElement('canvas');
+        canvas.className = 'page-canvas';
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+
+        const lbl = document.createElement('div');
+        lbl.className = 'page-counter';
+        lbl.textContent = `Page ${i} of ${total}`;
+
+        pdfPages.appendChild(canvas);
+        pdfPages.appendChild(lbl);
+      }
+    }
+
+    async function renderPPT(b64, ext) {
+      viewerLoading.style.display = 'none';
+      pptContainer.style.display = 'flex';
+
+      const buf = b642ab(b64);
+      const mime = ext === 'pptx'
+        ? 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+        : 'application/vnd.ms-powerpoint';
+      const blob = new Blob([buf], { type: mime });
+      const url = URL.createObjectURL(blob);
+
+      const notice = document.createElement('div');
+      notice.className = 'ppt-notice';
+      notice.textContent = '⚠ PowerPoint preview — read-only, slide interactions are disabled.';
+
+      const wrap = document.createElement('div');
+      wrap.className = 'ppt-iframe-wrap';
+
+      const iframe = document.createElement('iframe');
+      iframe.src = url;
+      iframe.sandbox = 'allow-same-origin';
+      iframe.setAttribute('scrolling', 'no');
+
+      const blocker = document.createElement('div');
+      blocker.className = 'ppt-blocker';
+
+      wrap.appendChild(iframe);
+      wrap.appendChild(blocker);
+      pptPages.appendChild(notice);
+      pptPages.appendChild(wrap);
+    }
+
+    function blockShortcuts(e) {
+      if ((e.ctrlKey || e.metaKey) && ['c', 'a', 's', 'p', 'u'].includes(e.key.toLowerCase())) {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+      }
+    }
+    function blockContext(e) { e.preventDefault(); }
+
+    // ── Utils ─────────────────────────────────────────────────────
+    function slugify(s) {
+      return s.toLowerCase().trim()
+        .replace(/[^a-z0-9\-]/g, '-')
+        .replace(/-+/g, '-').replace(/^-|-$/g, '');
+    }
+    function fmtBytes(b) {
+      if (b < 1024) return b + ' B';
+      if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+      return (b / 1048576).toFixed(1) + ' MB';
+    }
+    function readAsArrayBuffer(file, onProgress) {
+      return new Promise((res, rej) => {
+        const r = new FileReader();
+        r.onprogress = e => { if (e.lengthComputable && onProgress) onProgress(e.loaded / e.total); };
+        r.onload = () => res(r.result);
+        r.onerror = () => rej(r.error);
+        r.readAsArrayBuffer(file);
+      });
+    }
+    function ab2b64(buf) {
+      let bin = '', bytes = new Uint8Array(buf), chunk = 8192;
+      for (let i = 0; i < bytes.byteLength; i += chunk)
+        bin += String.fromCharCode(...bytes.subarray(i, i + chunk));
+      return btoa(bin);
+    }
+    function b642ab(b64) {
+      const bin = atob(b64), bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      return bytes.buffer;
+    }
+  </script>
+</body>
+
+</html>
