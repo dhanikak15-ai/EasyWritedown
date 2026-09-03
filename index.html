@@ -824,43 +824,26 @@
 
     /* PPT container */
     #pptContainer .viewer-body-scroll {
-      pointer-events: none;
-    }
-
-    .ppt-notice {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      padding: 12px 20px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: var(--surface);
-      pointer-events: none;
-      max-width: 860px;
+      pointer-events: auto;
       width: 100%;
-      text-align: center;
+      max-width: 960px;
     }
 
     .ppt-iframe-wrap {
       position: relative;
       width: 100%;
-      max-width: 860px;
+      max-width: 960px;
     }
 
     .ppt-iframe-wrap iframe {
       width: 100%;
-      height: 75vh;
-      border: 1px solid #2a2a2a;
-      border-radius: 8px;
-      background: #fff;
+      height: 82vh;
+      min-height: 540px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      background: var(--surface);
       display: block;
-    }
-
-    .ppt-blocker {
-      position: absolute;
-      inset: 0;
-      z-index: 999;
-      background: transparent;
-      cursor: default;
+      box-shadow: var(--shadow);
     }
 
     @media (max-width: 500px) {
@@ -1500,37 +1483,38 @@
     async function renderPPT(source, ext) {
       viewerLoading.style.display = 'none';
       pptContainer.style.display = 'flex';
+      pptPages.innerHTML = '';
 
-      let url;
+      let rawUrl;
       if (typeof source === 'string' && (source.startsWith('http://') || source.startsWith('https://'))) {
-        url = source;
+        rawUrl = source;
       } else {
         const buf = typeof source === 'string' ? b642ab(source) : source;
         const mime = ext === 'pptx'
           ? 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
           : 'application/vnd.ms-powerpoint';
         const blob = new Blob([buf], { type: mime });
-        url = URL.createObjectURL(blob);
+        rawUrl = URL.createObjectURL(blob);
       }
-
-      const notice = document.createElement('div');
-      notice.className = 'ppt-notice';
-      notice.textContent = '⚠ PowerPoint preview — read-only, slide interactions are disabled.';
 
       const wrap = document.createElement('div');
       wrap.className = 'ppt-iframe-wrap';
 
       const iframe = document.createElement('iframe');
-      iframe.src = url;
-      iframe.sandbox = 'allow-same-origin';
-      iframe.setAttribute('scrolling', 'no');
+      // If hosted online, use Microsoft Office Online Viewer or Google Viewer for full slide presentation
+      if (rawUrl.startsWith('http://') || rawUrl.startsWith('https://')) {
+        iframe.src = 'https://view.officeapps.live.com/op/embed.aspx?src=' + encodeURIComponent(rawUrl);
+        iframe.onerror = () => {
+          iframe.src = 'https://docs.google.com/viewer?url=' + encodeURIComponent(rawUrl) + '&embedded=true';
+        };
+      } else {
+        iframe.src = rawUrl;
+      }
 
-      const blocker = document.createElement('div');
-      blocker.className = 'ppt-blocker';
+      iframe.setAttribute('allowfullscreen', 'true');
+      iframe.setAttribute('title', 'PowerPoint Presentation Viewer');
 
       wrap.appendChild(iframe);
-      wrap.appendChild(blocker);
-      pptPages.appendChild(notice);
       pptPages.appendChild(wrap);
     }
 
