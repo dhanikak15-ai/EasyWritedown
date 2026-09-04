@@ -895,7 +895,7 @@
       </div>
 
       <div class="home-footer">
-        <div>Files are stored locally in your browser · No servers, no tracking</div>
+        <div>Files are stored in AWS cloud services</div>
         <div class="footer-links">
           <a id="privacyLink">Privacy Policy</a>
           <span>·</span>
@@ -997,10 +997,11 @@
         <button class="modal-close" id="privacyClose" aria-label="Close">&#x2715;</button>
       </div>
       <div style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.6; display: flex; flex-direction: column; gap: 12px; max-height: 60vh; overflow-y: auto;">
-        <p><strong>1. Local Browser Storage</strong><br/>EasyWritedown operates strictly inside your web browser. All uploaded files (PDFs and PowerPoint presentations) are converted and stored locally on your device using IndexedDB.</p>
-        <p><strong>2. No Remote Server Uploads</strong><br/>We do not transmit, upload, host, or store any of your documents or personal data on remote cloud servers.</p>
-        <p><strong>3. Zero Tracking & Cookies</strong><br/>EasyWritedown does not use tracking cookies, analytics scripts, or third-party advertising trackers.</p>
-        <p><strong>4. Data Control</strong><br/>You have full control over your stored documents. Clearing your browser data or IndexedDB storage removes all saved pages immediately.</p>
+        <p><strong>1. Information We Store</strong><br/>When you publish a file, EasyWritedown stores the document in Amazon S3 and stores the page name, file name, file type, file size, storage key, content type, and publication time in Amazon DynamoDB. The app also keeps a browser-local copy in IndexedDB for fallback access.</p>
+        <p><strong>2. How We Use Information</strong><br/>We use this information to upload, store, retrieve, and display your published documents at the page name you choose. Published pages may be accessible to anyone who has the page address.</p>
+        <p><strong>3. AWS Services and Access</strong><br/>Document files are uploaded using temporary, signed AWS URLs. Viewer URLs are also temporary. AWS may process and store data as required to provide these services under its own policies and terms. If the cloud service is unavailable, the app may use the browser-local copy.</p>
+        <p><strong>4. Your Responsibilities and Choices</strong><br/>Do not upload confidential or sensitive information unless you are authorized to do so. Please contact the EasyWritedown operator if you need a published document or its associated page data reviewed or removed.</p>
+        <p><strong>5. Policy Changes</strong><br/>This policy may be updated when the service or its data practices change. Continued use of EasyWritedown after an update means you acknowledge the revised policy.</p>
       </div>
       <div class="modal-actions">
         <button class="btn btn-white" id="privacyOkBtn">Close</button>
@@ -1020,9 +1021,11 @@
       </div>
       <div style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.6; display: flex; flex-direction: column; gap: 12px; max-height: 60vh; overflow-y: auto;">
         <p><strong>1. Acceptance of Terms</strong><br/>By using EasyWritedown, you agree to these Terms of Service. If you do not agree, please discontinue use.</p>
-        <p><strong>2. User Content Responsibility</strong><br/>You are solely responsible for the documents you choose to store and view on your device. Do not use EasyWritedown for unlawful or copyright-infringing content.</p>
-        <p><strong>3. Service Provision</strong><br/>EasyWritedown is provided "as is" without warranties of any kind. As files are stored locally in browser storage, retention depends on your device configuration.</p>
-        <p><strong>4. Intellectual Property</strong><br/>All original branding and code belong to EasyWritedown. Document content rights remain entirely with the respective document owner.</p>
+        <p><strong>2. User Content Responsibility</strong><br/>You are responsible for the documents you upload, including obtaining all necessary rights and permissions. Do not upload unlawful, infringing, or confidential content that you are not authorized to share.</p>
+        <p><strong>3. Cloud Storage and Public Pages</strong><br/>Uploaded documents are stored using Amazon S3 and related AWS services, with a browser-local copy used as a fallback. A published document may be viewed by anyone who has its page address. Do not rely on EasyWritedown as the sole copy of an important document.</p>
+        <p><strong>4. Service Provision</strong><br/>EasyWritedown is provided "as is" without warranties of any kind. Availability, storage, signed-link access, and data retention may be affected by maintenance, AWS service availability, configuration changes, or other circumstances beyond our control.</p>
+        <p><strong>5. Intellectual Property</strong><br/>All original branding and code belong to EasyWritedown. Document content rights remain entirely with the respective document owner.</p>
+        <p><strong>6. Changes to These Terms</strong><br/>We may update these Terms when the service changes. Continued use of EasyWritedown after an update means you accept the revised Terms.</p>
       </div>
       <div class="modal-actions">
         <button class="btn btn-white" id="termsOkBtn">Close</button>
