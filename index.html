@@ -1076,9 +1076,9 @@
       <div class="home-footer">
         <div>Files are stored in AWS cloud services</div>
         <div class="footer-links">
-          <a id="privacyLink">Privacy Policy</a>
+          <a id="privacyLink" href="/privacy">Privacy Policy</a>
           <span>·</span>
-          <a id="termsLink">Terms of Service</a>
+          <a id="termsLink" href="/terms">Terms of Service</a>
         </div>
       </div>
     </div>
@@ -1329,6 +1329,8 @@
       viewerScreen.style.display = 'none';
       document.title = 'DONTCBOARD – Share Documents Instantly';
       updateCanonical('/');
+      if (typeof privacyModal !== 'undefined') privacyModal.classList.remove('open');
+      if (typeof termsModal !== 'undefined') termsModal.classList.remove('open');
       document.removeEventListener('keydown', blockShortcuts, true);
     }
     function showViewer() {
@@ -1370,6 +1372,15 @@
     window.addEventListener('load', route);
 
     function route() {
+      const routePath = location.pathname.replace(/\/+$/, '') || '/';
+      if (routePath === '/privacy' || routePath === '/terms') {
+        showHome();
+        const policyModal = routePath === '/privacy' ? privacyModal : termsModal;
+        policyModal.classList.add('open');
+        updateCanonical(routePath);
+        return;
+      }
+
       const p = getPageFromUrl();
       p ? loadPage(p) : showHome();
     }
