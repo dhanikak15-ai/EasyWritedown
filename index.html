@@ -137,52 +137,6 @@
       pointer-events: none;
     }
 
-    .ambient-motion {
-      position: absolute;
-      inset: 0;
-      z-index: 0;
-      overflow: hidden;
-      pointer-events: none;
-    }
-
-    .ambient-tile {
-      position: absolute;
-      width: 48px;
-      height: 48px;
-      border-radius: 10px;
-      background: #000;
-      opacity: 0.075;
-      animation: ambient-hop 16s ease-in-out infinite;
-    }
-
-    html.dark .ambient-tile {
-      background: #fff;
-    }
-
-    .ambient-tile:nth-child(1) {
-      top: 22%;
-      left: 9%;
-      animation-delay: -2s;
-    }
-
-    .ambient-tile:nth-child(2) {
-      top: 68%;
-      left: 23%;
-      animation-delay: -7s;
-    }
-
-    .ambient-tile:nth-child(3) {
-      top: 27%;
-      right: 12%;
-      animation-delay: -11s;
-    }
-
-    .ambient-tile:nth-child(4) {
-      top: 76%;
-      right: 25%;
-      animation-delay: -14s;
-    }
-
     .home-inner {
       position: relative;
       z-index: 1;
@@ -931,16 +885,7 @@
       100% { transform: translateX(245%); }
     }
 
-    @keyframes ambient-hop {
-      0%, 12% { transform: translate(0, 0); }
-      28%, 40% { transform: translate(48px, 0); }
-      56%, 68% { transform: translate(48px, 48px); }
-      84%, 96% { transform: translate(0, 48px); }
-      100% { transform: translate(0, 0); }
-    }
-
     @media (prefers-reduced-motion: reduce) {
-      .ambient-tile,
       .viewer-loading-logo,
       .viewer-loading-track::after {
         animation: none;
@@ -1037,13 +982,6 @@
 
   <!-- HOME -->
   <div id="homeScreen">
-    <div class="ambient-motion" aria-hidden="true">
-      <span class="ambient-tile"></span>
-      <span class="ambient-tile"></span>
-      <span class="ambient-tile"></span>
-      <span class="ambient-tile"></span>
-    </div>
-
     <div class="home-inner">
 
       <div class="logo-block">
