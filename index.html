@@ -858,9 +858,53 @@
       align-items: center;
       justify-content: center;
       gap: 16px;
-      min-height: 300px;
+      min-height: 58vh;
       color: var(--text-muted);
       font-size: 0.9rem;
+    }
+
+    .viewer-loading-logo {
+      width: 68px;
+      height: 68px;
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      animation: loading-pulse 1.8s ease-in-out infinite;
+    }
+
+    .viewer-loading-copy {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .viewer-loading-title {
+      color: var(--text);
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .viewer-loading-subtitle {
+      color: var(--text-dim);
+      font-size: 0.78rem;
+    }
+
+    .viewer-loading-track {
+      width: min(220px, 70vw);
+      height: 3px;
+      overflow: hidden;
+      border-radius: 99px;
+      background: var(--surface2);
+    }
+
+    .viewer-loading-track::after {
+      content: '';
+      display: block;
+      width: 42%;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--text);
+      animation: loading-slide 1.2s ease-in-out infinite;
     }
 
     .spinner {
@@ -876,6 +920,16 @@
       to {
         transform: rotate(360deg);
       }
+    }
+
+    @keyframes loading-pulse {
+      0%, 100% { transform: scale(0.96); opacity: 0.78; }
+      50% { transform: scale(1); opacity: 1; }
+    }
+
+    @keyframes loading-slide {
+      0% { transform: translateX(-115%); }
+      100% { transform: translateX(245%); }
     }
 
     .not-found-msg {
@@ -1090,8 +1144,12 @@
     </div>
 
     <div class="viewer-loading" id="viewerLoading">
-      <div class="spinner"></div>
-      <span>Loading document…</span>
+      <img class="viewer-loading-logo" src="icon.png" alt="EasyWritedown" />
+      <div class="viewer-loading-copy">
+        <span class="viewer-loading-title" id="viewerLoadingTitle">Finding your document</span>
+        <span class="viewer-loading-subtitle" id="viewerLoadingSubtitle">Preparing your page</span>
+      </div>
+      <div class="viewer-loading-track" aria-hidden="true"></div>
     </div>
 
     <div class="not-found-msg" id="notFoundMsg" style="display:none;">
@@ -1522,13 +1580,21 @@
     const pdfPages = document.getElementById('pdfPages');
     const pptContainer = document.getElementById('pptContainer');
     const pptPages = document.getElementById('pptPages');
+    const viewerLoadingTitle = document.getElementById('viewerLoadingTitle');
+    const viewerLoadingSubtitle = document.getElementById('viewerLoadingSubtitle');
+
+    function setViewerLoading(title, subtitle) {
+      viewerLoadingTitle.textContent = title;
+      viewerLoadingSubtitle.textContent = subtitle;
+      viewerLoading.style.display = 'flex';
+    }
 
     async function loadPage(pageName) {
       showViewer();
       document.getElementById('viewerPageLabel').textContent = pageName;
       document.title = pageName + ' — EasyWritedown';
 
-      viewerLoading.style.display = 'flex';
+      setViewerLoading('Finding your document', 'Preparing your page');
       notFoundMsg.style.display = 'none';
       pdfContainer.style.display = 'none';
       pptContainer.style.display = 'none';
@@ -1586,6 +1652,7 @@
       const pdfDoc = await pdfjsLib.getDocument(docInitParams).promise;
       const total = pdfDoc.numPages;
 
+      setViewerLoading('Opening your document', `Rendering ${total} page${total === 1 ? '' : 's'}`);
       viewerLoading.style.display = 'none';
       pdfContainer.style.display = 'flex';
 
@@ -1610,7 +1677,7 @@
     }
 
     async function renderPPT(source, ext) {
-      viewerLoading.style.display = 'none';
+      setViewerLoading('Opening your presentation', 'Loading the first slide');
       pptContainer.style.display = 'flex';
       pptPages.innerHTML = '';
 
@@ -1642,6 +1709,9 @@
 
       iframe.setAttribute('allowfullscreen', 'true');
       iframe.setAttribute('title', 'PowerPoint Presentation Viewer');
+      iframe.addEventListener('load', () => {
+        viewerLoading.style.display = 'none';
+      }, { once: true });
 
       wrap.appendChild(iframe);
       pptPages.appendChild(wrap);
