@@ -1,8 +1,8 @@
-# EasyWritedown
+# DONTCBOARD
 
 > Publish PDFs and PowerPoint files to a memorable page name and share them through a clean, browser-based viewer.
 
-EasyWritedown is a small full-stack document publishing application built around an AWS serverless storage pattern. The browser handles the user experience, the API creates short-lived signed URLs, Amazon S3 stores document bytes, and Amazon DynamoDB stores the lookup metadata needed to find each document.
+DONTCBOARD is a small full-stack document publishing application built around an AWS serverless storage pattern. The browser handles the user experience, the API creates short-lived signed URLs, Amazon S3 stores document bytes, and Amazon DynamoDB stores the lookup metadata needed to find each document.
 
 This project is also a practical first AWS cloud integration: it keeps the infrastructure understandable while using the same design principles used by larger cloud applications: least-privilege access, direct-to-object-storage uploads, durable metadata, and stateless API endpoints.
 
@@ -89,7 +89,7 @@ No sort key is required for the current one-document-per-page model. Publishing 
 
 ### 1. Create the S3 bucket
 
-Create a private S3 bucket in the region you plan to use. Keep **Block all public access** enabled. EasyWritedown uses presigned URLs, so the bucket does not need to be public.
+Create a private S3 bucket in the region you plan to use. Keep **Block all public access** enabled. DONTCBOARD uses presigned URLs, so the bucket does not need to be public.
 
 Use a globally unique bucket name, for example:
 
