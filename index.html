@@ -785,6 +785,7 @@
       min-height: 100vh;
       flex-direction: column;
       background: var(--bg);
+      position: relative;
     }
 
     .viewer-header {
@@ -801,11 +802,21 @@
     }
 
     .viewer-logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
       font-size: 1.1rem;
       font-weight: 700;
       color: var(--text);
       cursor: pointer;
       user-select: none;
+    }
+
+    .viewer-logo-mark {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
     }
 
     .viewer-logo span {
@@ -853,12 +864,16 @@
     }
 
     .viewer-loading {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       gap: 16px;
-      min-height: 58vh;
+      min-height: 100vh;
+      background: var(--bg);
       color: var(--text-muted);
       font-size: 0.9rem;
     }
@@ -1139,7 +1154,10 @@
   <!-- VIEWER -->
   <div id="viewerScreen">
     <div class="viewer-header">
-      <div class="viewer-logo" id="viewerLogoLink">Easy<span>Writedown</span></div>
+      <div class="viewer-logo" id="viewerLogoLink">
+        <img class="viewer-logo-mark" src="icon.png" alt="" />
+        <span>Easy<span>Writedown</span></span>
+      </div>
       <div class="viewer-page-name" id="viewerPageLabel"></div>
     </div>
 
@@ -1653,7 +1671,6 @@
       const total = pdfDoc.numPages;
 
       setViewerLoading('Opening your document', `Rendering ${total} page${total === 1 ? '' : 's'}`);
-      viewerLoading.style.display = 'none';
       pdfContainer.style.display = 'flex';
 
       const scale = window.innerWidth < 600 ? 1.0 : window.innerWidth < 900 ? 1.4 : 1.8;
@@ -1673,6 +1690,8 @@
 
         pdfPages.appendChild(canvas);
         pdfPages.appendChild(lbl);
+
+        if (i === 1) viewerLoading.style.display = 'none';
       }
     }
 
