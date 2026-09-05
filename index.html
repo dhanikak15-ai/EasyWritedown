@@ -752,8 +752,10 @@
       }
     }
 
-    /* Video stage */
-    .video-stage {
+    /* ── HARDWARE-ACCELERATED VIDEO STAGE & FULLSCREEN ── */
+    .video-stage,
+    .viewer-video-container {
+      width: 100%;
       background: #000000;
       border: 1px solid var(--border);
       border-radius: var(--radius-lg);
@@ -764,14 +766,80 @@
       align-items: center;
       justify-content: center;
       box-shadow: var(--shadow-lg);
+      contain: layout style;
+      transform: translate3d(0, 0, 0);
+      -webkit-transform: translate3d(0, 0, 0);
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      will-change: transform;
     }
 
-    .video-stage video {
+    .video-stage video,
+    .viewer-video-container video {
       width: 100%;
       height: 100%;
       object-fit: contain;
       display: block;
       background: #000000;
+      will-change: transform;
+      transform: translate3d(0, 0, 0);
+      -webkit-transform: translate3d(0, 0, 0);
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      image-rendering: -webkit-optimize-contrast;
+      image-rendering: auto;
+    }
+
+    /* Zero-lag Fullscreen Optimization */
+    :fullscreen,
+    :-webkit-full-screen,
+    :-moz-full-screen,
+    :-ms-fullscreen {
+      transition: none !important;
+      animation: none !important;
+    }
+
+    .video-stage:fullscreen,
+    .video-stage:-webkit-full-screen,
+    .video-stage:-moz-full-screen,
+    .video-stage:-ms-fullscreen,
+    .viewer-video-container:fullscreen,
+    .viewer-video-container:-webkit-full-screen,
+    .viewer-video-container:-moz-full-screen,
+    .viewer-video-container:-ms-fullscreen {
+      width: 100vw !important;
+      height: 100vh !important;
+      max-width: 100vw !important;
+      max-height: 100vh !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      background: #000000 !important;
+      aspect-ratio: auto !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      overflow: hidden !important;
+      transition: none !important;
+      contain: strict !important;
+    }
+
+    .video-stage:fullscreen video,
+    .video-stage:-webkit-full-screen video,
+    .video-stage:-moz-full-screen video,
+    .video-stage:-ms-fullscreen video,
+    .viewer-video-container:fullscreen video,
+    .viewer-video-container:-webkit-full-screen video,
+    .viewer-video-container:-moz-full-screen video,
+    .viewer-video-container:-ms-fullscreen video {
+      width: 100vw !important;
+      height: 100vh !important;
+      max-width: 100vw !important;
+      max-height: 100vh !important;
+      object-fit: contain !important;
+      background: #000000 !important;
+      transform: translate3d(0, 0, 0) !important;
+      -webkit-transform: translate3d(0, 0, 0) !important;
+      transition: none !important;
     }
 
     .video-placeholder {
@@ -981,28 +1049,6 @@
       max-width: 1200px;
       width: 100%;
       margin: 0 auto;
-    }
-
-    .viewer-video-container {
-      width: 100%;
-      background: #000000;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      overflow: hidden;
-      position: relative;
-      aspect-ratio: 16 / 9;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: var(--shadow-lg);
-    }
-
-    .viewer-video-container video {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      display: block;
-      background: #000000;
     }
 
     .viewer-loading-overlay {
@@ -1601,7 +1647,6 @@
     </nav>
 
     <div class="nav-actions">
-      <!-- Theme toggle -->
       <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode" title="Toggle theme">
         <svg class="toggle-icon-sun" viewBox="0 0 24 24">
           <circle cx="12" cy="12" r="5" />
@@ -1691,10 +1736,8 @@
         <p>Share your screen live with anyone using a secure room link or 6-digit room code.</p>
       </div>
 
-      <!-- Action Hero Card -->
       <div class="live-hero-card">
         <div class="live-hero-actions">
-          <!-- Start Live Share -->
           <div class="option-card card-featured" id="startLiveShareCard" style="height: 100%; justify-content: space-between;">
             <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
               <div class="option-icon">
@@ -1711,7 +1754,6 @@
             </button>
           </div>
 
-          <!-- Join Live Share -->
           <div class="option-card" style="height: 100%; justify-content: space-between;">
             <div style="display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%;">
               <div class="option-icon">
@@ -1733,7 +1775,6 @@
           </div>
         </div>
 
-        <!-- Multi-tab workflow tip -->
         <div class="tip-card tip-glow">
           <div class="tip-icon">💡</div>
           <div class="tip-content">
@@ -1743,7 +1784,6 @@
         </div>
       </div>
 
-      <!-- Feature Badges -->
       <div class="features-row">
         <div class="feature-item">
           <strong>⚡ Peer-to-Peer WebRTC</strong>
@@ -1794,9 +1834,7 @@
       </div>
     </div>
 
-    <!-- Main Dashboard Body -->
     <div class="dashboard-layout">
-      <!-- Left Column: Video Stage & Controls -->
       <div style="display: flex; flex-direction: column; gap: 16px;">
         <div class="video-stage" id="hostVideoStage">
           <video id="hostVideoPreview" autoplay muted playsinline style="display: none;"></video>
@@ -1822,12 +1860,11 @@
             </div>
             <button class="btn btn-outline btn-sm" id="hostBtnFullscreenPreview" style="background: rgba(0,0,0,0.6); color: #fff; border-color: rgba(255,255,255,0.3);">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
-              <span>Fullscreen</span>
+              <span id="hostFullscreenLabel">Fullscreen</span>
             </button>
           </div>
         </div>
 
-        <!-- Controls Bar -->
         <div class="dashboard-controls">
           <div class="controls-left">
             <button class="btn btn-white" id="hostBtnStartCapture">
@@ -1845,7 +1882,6 @@
           </div>
         </div>
 
-        <!-- Tip Box -->
         <div class="tip-card tip-glow">
           <div class="tip-icon">💡</div>
           <div class="tip-content">
@@ -1857,9 +1893,7 @@
         </div>
       </div>
 
-      <!-- Right Column: Share Info & Live Chat -->
       <div class="dashboard-sidebar">
-        <!-- Room Info Card -->
         <div class="sidebar-card">
           <div class="sidebar-card-title">
             <span>Share Room Link</span>
@@ -1874,7 +1908,6 @@
           </div>
         </div>
 
-        <!-- Live Chat Card -->
         <div class="sidebar-card" style="flex: 1;">
           <div class="sidebar-card-title">
             <span>Live Chat</span>
@@ -1912,7 +1945,7 @@
       <div class="controls-right">
         <button class="btn btn-outline btn-sm" id="viewerBtnFullscreen">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
-          <span>Full Screen</span>
+          <span id="viewerFullscreenLabel">Full Screen</span>
         </button>
         <button class="btn btn-outline btn-sm" id="viewerBtnLeave">Leave</button>
       </div>
@@ -1922,7 +1955,6 @@
       <div class="viewer-video-container" id="viewerVideoContainer">
         <video id="viewerStreamVideo" autoplay playsinline></video>
 
-        <!-- Loading Overlay -->
         <div class="viewer-loading-overlay" id="viewerLoadingOverlay">
           <div class="spinner"></div>
           <h3 id="liveViewerLoadingTitle">Connecting to Live Session</h3>
@@ -1931,7 +1963,6 @@
           </p>
         </div>
 
-        <!-- Session Ended State -->
         <div class="viewer-loading-overlay" id="viewerEndedOverlay" style="display: none; background: rgba(0,0,0,0.92);">
           <div style="font-size: 2.5rem; margin-bottom: 8px;">📡</div>
           <h3 style="font-size: 1.4rem;">Live Sharing Ended</h3>
@@ -1945,7 +1976,6 @@
         </div>
       </div>
 
-      <!-- Controls & Chat Bar -->
       <div class="viewer-controls-bar">
         <div class="controls-left">
           <button class="btn btn-outline btn-sm" id="viewerBtnAudioToggle">
@@ -1963,7 +1993,6 @@
         </div>
       </div>
 
-      <!-- Chat Feed -->
       <div class="sidebar-card" style="width: 100%;" id="viewerChatSection">
         <div class="sidebar-card-title">
           <span>Live Session Messages</span>
@@ -2153,7 +2182,6 @@
         }
       } catch (e) {}
 
-      // Fallback
       const ta = document.createElement('textarea');
       ta.value = text;
       ta.style.position = 'fixed';
@@ -2183,6 +2211,71 @@
         copyToClipboard(url, 'Live share link copied!');
       }
     }
+
+    // ── INSTANT LAG-FREE FULLSCREEN HANDLER ────────────────────────
+    function toggleFullscreen(element) {
+      if (!element) return;
+      const doc = document;
+      const isFull = !!(doc.fullscreenElement || doc.webkitFullscreenElement || doc.mozFullScreenElement || doc.msFullscreenElement);
+      
+      if (isFull) {
+        if (doc.exitFullscreen) doc.exitFullscreen();
+        else if (doc.webkitExitFullscreen) doc.webkitExitFullscreen();
+        else if (doc.mozCancelFullScreen) doc.mozCancelFullScreen();
+        else if (doc.msExitFullscreen) doc.msExitFullscreen();
+      } else {
+        const req = element.requestFullscreen || element.webkitRequestFullscreen || element.mozRequestFullScreen || element.msRequestFullscreen;
+        if (req) {
+          try {
+            const p = req.call(element, { navigationUI: 'hide' });
+            if (p && p.catch) {
+              p.catch(() => {
+                try { req.call(element); } catch (e) {}
+              });
+            }
+          } catch (err) {
+            try { req.call(element); } catch (e) {}
+          }
+        } else {
+          const video = element.tagName === 'VIDEO' ? element : element.querySelector('video');
+          if (video && video.webkitEnterFullscreen) {
+            video.webkitEnterFullscreen();
+          }
+        }
+      }
+    }
+
+    function handleFullscreenChange() {
+      const isFull = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+      
+      const vLabel = document.getElementById('viewerFullscreenLabel');
+      if (vLabel) vLabel.textContent = isFull ? 'Exit Full Screen' : 'Full Screen';
+      
+      const hLabel = document.getElementById('hostFullscreenLabel');
+      if (hLabel) hLabel.textContent = isFull ? 'Exit Fullscreen' : 'Fullscreen';
+    }
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+
+    // Global 'f' key shortcut for instantaneous fullscreen
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'f' || e.key === 'F') {
+        const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+        if (activeTag === 'input' || activeTag === 'textarea') return;
+        const liveViewer = document.getElementById('liveViewerScreen');
+        const liveHost = document.getElementById('liveHostScreen');
+        if (liveViewer && liveViewer.style.display === 'flex') {
+          e.preventDefault();
+          toggleFullscreen(document.getElementById('viewerVideoContainer'));
+        } else if (liveHost && liveHost.style.display === 'flex') {
+          e.preventDefault();
+          toggleFullscreen(document.getElementById('hostVideoStage'));
+        }
+      }
+    });
 
     // ── INDEXEDDB LOCAL STORE (DOCUMENTS) ─────────────────────────
     const DB_NAME = 'EasyWriteDB', STORE = 'pages';
@@ -2418,10 +2511,10 @@
       const v = document.getElementById('pageNameInput').value.trim();
       if (!v) return;
       if (/^EW-[A-Z0-9]{4,10}$/i.test(v) || /^\d{6}$/.test(v)) {
-        const rId = v.toUpperCase().startsWith('EW-') ? v.toUpperCase() : `EW-${v}`;
-        navigateTo(`/live/${rId}`);
+        const rId = v.toUpperCase().startsWith('EW-') ? v.toUpperCase() : ('EW-' + v);
+        navigateTo('/live/' + rId);
       } else {
-        navigateTo(`/${slugify(v)}`);
+        navigateTo('/' + slugify(v));
       }
     });
     document.getElementById('pageNameInput').addEventListener('keydown', e => {
@@ -2751,6 +2844,7 @@
     const hostAudioBadge = document.getElementById('hostAudioBadge');
     const hostAudioIcon = document.getElementById('hostAudioIcon');
     const hostAudioText = document.getElementById('hostAudioText');
+    const hostVideoStage = document.getElementById('hostVideoStage');
     const hostVideoPreview = document.getElementById('hostVideoPreview');
     const hostVideoPlaceholder = document.getElementById('hostVideoPlaceholder');
     const hostStageOverlay = document.getElementById('hostStageOverlay');
@@ -2762,6 +2856,13 @@
     const hostChatMessages = document.getElementById('hostChatMessages');
     const hostChatInput = document.getElementById('hostChatInput');
     const hostBtnSendChat = document.getElementById('hostBtnSendChat');
+
+    // Double-click on Host Video to Toggle Fullscreen
+    hostVideoStage.addEventListener('dblclick', (e) => {
+      if (e.target.closest('button') || e.target.closest('input')) return;
+      e.preventDefault();
+      toggleFullscreen(hostVideoStage);
+    });
 
     // Live share hub event listeners
     document.getElementById('startLiveShareCard').addEventListener('click', (e) => {
@@ -2777,8 +2878,8 @@
         document.getElementById('joinRoomCodeInput').focus();
         return;
       }
-      const rId = code.toUpperCase().startsWith('EW-') ? code.toUpperCase() : `EW-${code}`;
-      navigateTo(`/live/${rId}`);
+      const rId = code.toUpperCase().startsWith('EW-') ? code.toUpperCase() : ('EW-' + code);
+      navigateTo('/live/' + rId);
     });
     document.getElementById('joinRoomCodeInput').addEventListener('keydown', e => {
       if (e.key === 'Enter') document.getElementById('btnJoinLiveShare').click();
@@ -2821,7 +2922,6 @@
         document.title = `Host Session (${hostState.roomId}) – DONTCBOARD`;
         showToast(`Live Room ${hostState.roomId} created!`);
 
-        // Start Host polling loop & heartbeat
         startHostPolling();
       } catch (err) {
         console.error('Error starting live share session:', err);
@@ -2829,7 +2929,7 @@
       }
     }
 
-    // Host Screen Capture
+    // Host Screen Capture with 60fps & optimal constraints
     async function startHostScreenCapture() {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
         alert('Your browser does not support native screen capture. Please use Chrome, Edge, Safari 13+, or Firefox on desktop.');
@@ -2842,7 +2942,10 @@
         const stream = await navigator.mediaDevices.getDisplayMedia({
           video: {
             cursor: 'always',
-            displaySurface: 'monitor'
+            displaySurface: 'monitor',
+            frameRate: { ideal: 60, max: 60 },
+            width: { ideal: 1920 },
+            height: { ideal: 1080 }
           },
           audio: true
         });
@@ -2858,7 +2961,7 @@
         hostBtnStopCapture.style.display = 'inline-flex';
         hostLiveBadgeText.textContent = '🔴 LIVE BROADCAST';
         hostLiveBadge.style.background = 'rgba(239, 68, 68, 0.15)';
-        hostStreamStatusText.textContent = 'Live stream active';
+        hostStreamStatusText.textContent = 'Live stream active (60 FPS)';
 
         const audioTracks = stream.getAudioTracks();
         if (audioTracks.length > 0) {
@@ -2873,6 +2976,9 @@
 
         const videoTrack = stream.getVideoTracks()[0];
         if (videoTrack) {
+          if ('contentHint' in videoTrack) {
+            videoTrack.contentHint = 'motion';
+          }
           videoTrack.onended = () => {
             stopHostScreenCapture();
             showToast('Screen sharing stopped');
@@ -3124,8 +3230,7 @@
       triggerShare('DONTCBOARD Live Share', `Watch my live screen share: ${hostShareLinkInput.value}`, hostShareLinkInput.value);
     });
     document.getElementById('hostBtnFullscreenPreview').addEventListener('click', () => {
-      if (hostVideoPreview.requestFullscreen) hostVideoPreview.requestFullscreen();
-      else if (hostVideoPreview.webkitRequestFullscreen) hostVideoPreview.webkitRequestFullscreen();
+      toggleFullscreen(hostVideoStage);
     });
 
     hostBtnSendChat.addEventListener('click', sendHostChatMessage);
@@ -3146,6 +3251,7 @@
     };
 
     // UI elements (Viewer)
+    const viewerVideoContainer = document.getElementById('viewerVideoContainer');
     const viewerStreamVideo = document.getElementById('viewerStreamVideo');
     const viewerLoadingOverlay = document.getElementById('viewerLoadingOverlay');
     const viewerEndedOverlay = document.getElementById('viewerEndedOverlay');
@@ -3161,19 +3267,20 @@
     const viewerChatInput = document.getElementById('viewerChatInput');
     const viewerBtnSendChat = document.getElementById('viewerBtnSendChat');
 
+    // Double-click on Viewer Video to Toggle Fullscreen
+    viewerVideoContainer.addEventListener('dblclick', (e) => {
+      if (e.target.closest('button') || e.target.closest('input')) return;
+      e.preventDefault();
+      toggleFullscreen(viewerVideoContainer);
+    });
+
     document.getElementById('viewerNavBrand').addEventListener('click', () => leaveViewerSession('/'));
     document.getElementById('viewerBtnLeave').addEventListener('click', () => leaveViewerSession('/live'));
     document.getElementById('viewerBtnReturnHome').addEventListener('click', () => leaveViewerSession('/'));
     document.getElementById('viewerBtnStartOwnLive').addEventListener('click', () => leaveViewerSession('/live'));
 
     document.getElementById('viewerBtnFullscreen').addEventListener('click', () => {
-      const container = document.getElementById('viewerVideoContainer');
-      if (document.fullscreenElement) {
-        if (document.exitFullscreen) document.exitFullscreen();
-      } else {
-        if (container.requestFullscreen) container.requestFullscreen();
-        else if (container.webkitRequestFullscreen) container.webkitRequestFullscreen();
-      }
+      toggleFullscreen(viewerVideoContainer);
     });
 
     document.getElementById('viewerBtnAudioToggle').addEventListener('click', () => {
