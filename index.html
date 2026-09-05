@@ -113,7 +113,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 40px 20px;
+      padding: 104px 20px 40px;
       position: relative;
       overflow: hidden;
     }
@@ -127,6 +127,57 @@
         linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
       background-size: 48px 48px;
       pointer-events: none;
+    }
+
+    .home-topbar {
+      position: absolute;
+      top: 22px;
+      left: 24px;
+      right: 24px;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand-lockup {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--text);
+      font-size: 0.88rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-lockup img {
+      width: 32px;
+      height: 32px;
+      border-radius: 9px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    }
+
+    .brand-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      margin-right: 150px;
+      padding: 7px 11px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      color: var(--text-muted);
+      background: color-mix(in srgb, var(--bg) 78%, transparent);
+      font-size: 0.72rem;
+      font-weight: 500;
+    }
+
+    .brand-status::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #3d8b5f;
+      box-shadow: 0 0 0 3px rgba(61, 139, 95, 0.14);
     }
 
     .home-inner {
@@ -419,6 +470,32 @@
       flex-direction: column;
       gap: 6px;
       align-items: center;
+    }
+
+    .trust-row {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px 18px;
+      color: var(--text-dim);
+      font-size: 0.72rem;
+    }
+
+    .trust-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .trust-item svg {
+      width: 14px;
+      height: 14px;
+      fill: none;
+      stroke: currentColor;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 1.8;
     }
 
     .footer-links {
@@ -856,6 +933,20 @@
     }
 
     @media (max-width: 500px) {
+      #homeScreen {
+        padding: 88px 16px 32px;
+      }
+
+      .home-topbar {
+        top: 16px;
+        left: 16px;
+        right: 16px;
+      }
+
+      .brand-status {
+        display: none;
+      }
+
       .options-grid {
         grid-template-columns: 1fr;
       }
@@ -875,6 +966,14 @@
 
   <!-- HOME -->
   <div id="homeScreen">
+    <div class="home-topbar">
+      <div class="brand-lockup">
+        <img src="icon.png" alt="" />
+        <span>EasyWritedown</span>
+      </div>
+      <div class="brand-status">Ready to publish</div>
+    </div>
+
     <div class="home-inner">
 
       <div class="logo-block">
@@ -902,6 +1001,23 @@
       <div class="goto-block">
         <input type="text" id="pageNameInput" placeholder="Enter page name…" autocomplete="off" spellcheck="false" />
         <button class="btn btn-white" id="gotoBtn">Go</button>
+      </div>
+
+      <div class="trust-row" aria-label="Supported features">
+        <span class="trust-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 3 5 6v5c0 4.5 2.9 8.5 7 10 4.1-1.5 7-5.5 7-10V6l-7-3Z" />
+            <path d="m9 12 2 2 4-4" />
+          </svg>
+          Private sharing
+        </span>
+        <span class="trust-item">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />
+            <path d="M14 2v6h6M8 13h8M8 17h5" />
+          </svg>
+          PDF and PowerPoint
+        </span>
       </div>
 
       <div class="home-footer">
