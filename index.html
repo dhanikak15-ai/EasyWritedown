@@ -4,16 +4,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DONTCBOARD – Share Documents Instantly</title>
+  <title>DONTCBOARD – Share Documents &amp; Live Screen Share</title>
   <meta name="description"
-    content="DONTCBOARD lets you publish PDFs and PowerPoint files instantly on a named page. Simple, clean, and distraction-free." />
+    content="DONTCBOARD lets you publish PDFs, PowerPoint files instantly and share your screen live in real-time with anyone via secure rooms." />
   <meta name="robots" content="index, follow" />
   <meta name="google" content="notranslate" />
   <link rel="canonical" href="/" />
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="DONTCBOARD – Share Documents Instantly" />
+  <meta property="og:title" content="DONTCBOARD – Share Documents &amp; Live Screen Share" />
   <meta property="og:description"
-    content="Publish PDFs and PowerPoint files instantly on a named, shareable page." />
+    content="Publish PDFs, PowerPoint files instantly and broadcast your screen live in real-time." />
   <meta property="og:url" content="/" />
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8368832783243570"
     crossorigin="anonymous"></script>
@@ -21,7 +21,7 @@
   <link rel="apple-touch-icon" href="icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <style>
     *,
     *::before,
@@ -44,11 +44,13 @@
       --accent: #000000;
       --radius: 8px;
       --radius-lg: 14px;
+      --radius-full: 9999px;
       --transition: 0.18s ease;
       --grid-line: rgba(0, 0, 0, 0.06);
       --scrollbar-thumb: #bbb;
       --modal-bg: rgba(255, 255, 255, 0.85);
       --shadow: 0 4px 32px rgba(0, 0, 0, 0.08);
+      --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.12);
 
       /* High-contrast Input Variables */
       --input-bg: #f4f4f4;
@@ -61,6 +63,12 @@
       --icon-bg: #ffffff;
       --icon-border: #111111;
       --icon-stroke: #111111;
+
+      /* Live indicator */
+      --live-red: #ef4444;
+      --live-red-glow: rgba(239, 68, 68, 0.35);
+      --live-green: #10b981;
+      --live-green-glow: rgba(16, 185, 129, 0.35);
     }
 
     /* ── Dark mode ── */
@@ -78,6 +86,7 @@
       --scrollbar-thumb: #333;
       --modal-bg: rgba(0, 0, 0, 0.75);
       --shadow: 0 4px 32px rgba(0, 0, 0, 0.5);
+      --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.6);
 
       /* High-contrast Input Variables */
       --input-bg: #141414;
@@ -90,6 +99,12 @@
       --icon-bg: #111111;
       --icon-border: #333333;
       --icon-stroke: #ffffff;
+
+      /* Live indicator */
+      --live-red: #f87171;
+      --live-red-glow: rgba(248, 113, 113, 0.4);
+      --live-green: #34d399;
+      --live-green-glow: rgba(52, 211, 153, 0.4);
     }
 
     html,
@@ -103,6 +118,7 @@
 
     ::-webkit-scrollbar {
       width: 6px;
+      height: 6px;
     }
 
     ::-webkit-scrollbar-track {
@@ -114,72 +130,148 @@
       border-radius: 99px;
     }
 
-    /* HOME */
-    #homeScreen {
-      min-height: 100vh;
+    /* ── GLOBAL TOP NAVIGATION ── */
+    .top-nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 64px;
+      z-index: 100;
       display: flex;
-      flex-direction: column;
       align-items: center;
-      justify-content: center;
-      padding: 72px 20px 20px;
-      position: relative;
-      overflow: hidden;
+      justify-content: space-between;
+      padding: 0 24px;
+      background: rgba(var(--bg), 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      transition: background var(--transition), border-color var(--transition);
     }
 
-    #homeScreen::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background-image:
-        linear-gradient(var(--grid-line) 1px, transparent 1px),
-        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-      background-size: 48px 48px;
-      pointer-events: none;
+    html:not(.dark) .top-nav {
+      background: rgba(255, 255, 255, 0.88);
     }
 
-    .home-inner {
-      position: relative;
-      z-index: 1;
-      width: 100%;
-      max-width: 520px;
+    html.dark .top-nav {
+      background: rgba(10, 10, 10, 0.88);
+    }
+
+    .nav-brand {
       display: flex;
-      flex-direction: column;
       align-items: center;
-      gap: 26px;
-    }
-
-    .logo-block {
-      text-align: center;
-    }
-
-    .brand-mark {
-      width: 60px;
-      height: 60px;
-      display: block;
-      margin: 0 auto 12px;
-      border-radius: 18px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-    }
-
-    .logo-block h1 {
-      font-size: 3rem;
+      gap: 10px;
+      font-size: 1.05rem;
       font-weight: 800;
-      letter-spacing: -0.03em;
+      letter-spacing: -0.02em;
       color: var(--text);
+      text-decoration: none;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .nav-brand-mark {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .nav-brand .brand-c {
+      color: var(--text-muted);
+    }
+
+    .nav-tabs {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 4px;
+      border-radius: var(--radius-full);
+    }
+
+    .nav-tab-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 16px;
+      border-radius: var(--radius-full);
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 0.84rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition);
+      user-select: none;
+      text-decoration: none;
+    }
+
+    .nav-tab-btn:hover {
+      color: var(--text);
+    }
+
+    .nav-tab-btn.active {
+      background: var(--text);
+      color: var(--bg);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* ── Live pulsing dot ── */
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--live-red);
+      display: inline-block;
+      box-shadow: 0 0 8px var(--live-red-glow);
+      animation: livePulse 1.6s infinite ease-in-out;
+    }
+
+    @keyframes livePulse {
+      0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+        box-shadow: 0 0 4px var(--live-red-glow);
+      }
+      50% {
+        transform: scale(1.35);
+        opacity: 0.75;
+        box-shadow: 0 0 12px var(--live-red);
+      }
+    }
+
+    .live-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: var(--live-red);
+      font-size: 0.74rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: var(--radius-full);
     }
 
     /* ── Theme toggle button ── */
     .theme-toggle {
-      position: fixed;
-      top: 18px;
-      right: 22px;
-      z-index: 200;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 50px;
-      min-width: 42px;
-      min-height: 42px;
-      padding: 9px;
+      min-width: 38px;
+      min-height: 38px;
+      padding: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -191,11 +283,6 @@
       color: var(--text-muted);
       transition: background var(--transition), border-color var(--transition), color var(--transition), box-shadow var(--transition);
       user-select: none;
-      box-shadow: var(--shadow);
-    }
-
-    .toggle-label {
-      display: none;
     }
 
     .theme-toggle:hover {
@@ -227,26 +314,80 @@
       display: block;
     }
 
-    html:not(.dark) .toggle-label::after {
-      content: 'Dark mode';
+    /* ── BASE SCREEN LAYOUT ── */
+    .screen-container {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 96px 20px 40px;
+      position: relative;
+      overflow-x: hidden;
     }
 
-    html.dark .toggle-label::after {
-      content: 'Light mode';
+    .screen-container::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--grid-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .screen-inner {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 620px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .logo-block {
+      text-align: center;
+    }
+
+    .brand-mark {
+      width: 60px;
+      height: 60px;
+      display: block;
+      margin: 0 auto 12px;
+      border-radius: 18px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    }
+
+    .logo-block h1 {
+      font-size: 2.8rem;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      color: var(--text);
     }
 
     .logo-block p {
       margin-top: 10px;
       font-size: 0.95rem;
       color: var(--text-muted);
+      line-height: 1.5;
     }
 
+    /* ── CARD GRIDS ── */
     .options-grid {
       width: 100%;
       display: grid;
-      grid-template-columns: 1fr;
+      grid-template-columns: 1fr 1fr;
       gap: 16px;
-      max-width: 320px;
+    }
+
+    @media (max-width: 540px) {
+      .options-grid {
+        grid-template-columns: 1fr;
+      }
     }
 
     .option-card {
@@ -257,35 +398,29 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 14px;
+      gap: 12px;
       cursor: pointer;
-      transition: border-color var(--transition), background var(--transition), transform var(--transition);
+      transition: border-color var(--transition), background var(--transition), transform var(--transition), box-shadow var(--transition);
       position: relative;
       overflow: hidden;
       user-select: none;
-    }
-
-    .option-card::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.04), transparent);
-      opacity: 0;
-      transition: opacity var(--transition);
+      text-align: center;
     }
 
     .option-card:hover {
       border-color: var(--border-hover);
       background: var(--surface2);
       transform: translateY(-2px);
-    }
-
-    .option-card:hover::after {
-      opacity: 1;
+      box-shadow: var(--shadow);
     }
 
     .option-card:active {
       transform: translateY(0);
+    }
+
+    .option-card.card-featured {
+      border: 1.5px solid var(--text);
+      background: var(--surface);
     }
 
     .option-icon {
@@ -298,6 +433,7 @@
       align-items: center;
       justify-content: center;
       transition: background var(--transition), border-color var(--transition);
+      position: relative;
     }
 
     .option-icon svg {
@@ -312,17 +448,18 @@
     }
 
     .option-label {
-      font-size: 1rem;
-      font-weight: 600;
+      font-size: 1.05rem;
+      font-weight: 700;
       color: var(--text);
-      text-align: center;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
     .option-desc {
-      font-size: 0.8rem;
+      font-size: 0.82rem;
       color: var(--text-muted);
-      text-align: center;
-      line-height: 1.5;
+      line-height: 1.45;
     }
 
     .divider {
@@ -350,7 +487,8 @@
       gap: 10px;
     }
 
-    .goto-block input {
+    .goto-block input,
+    .room-code-input {
       flex: 1;
       background: var(--input-bg);
       border: 2px solid var(--input-border);
@@ -364,15 +502,18 @@
       transition: border-color var(--transition), background var(--transition);
     }
 
-    .goto-block input::placeholder {
+    .goto-block input::placeholder,
+    .room-code-input::placeholder {
       color: var(--input-placeholder);
       font-weight: 400;
     }
 
-    .goto-block input:focus {
+    .goto-block input:focus,
+    .room-code-input:focus {
       border-color: var(--input-focus);
     }
 
+    /* ── BUTTONS ── */
     .btn {
       display: inline-flex;
       align-items: center;
@@ -384,9 +525,10 @@
       font-size: 0.9rem;
       font-weight: 600;
       cursor: pointer;
-      transition: background var(--transition), color var(--transition), transform var(--transition);
+      transition: all var(--transition);
       padding: 13px 22px;
       user-select: none;
+      text-decoration: none;
     }
 
     .btn-white {
@@ -397,10 +539,11 @@
 
     .btn-white:hover {
       opacity: 0.88;
+      transform: translateY(-1px);
     }
 
     .btn-white:active {
-      transform: scale(0.97);
+      transform: scale(0.98);
     }
 
     .btn-white:disabled {
@@ -409,6 +552,7 @@
       border-color: var(--border);
       cursor: not-allowed;
       opacity: 0.5;
+      transform: none;
     }
 
     .btn-outline {
@@ -418,44 +562,517 @@
     }
 
     .btn-outline:hover {
-      border-color: #555;
+      border-color: var(--border-hover);
       background: var(--surface2);
+      transform: translateY(-1px);
     }
 
-    .home-footer {
-      font-size: 0.78rem;
-      color: var(--text-dim);
-      text-align: center;
+    .btn-danger {
+      background: #ef4444;
+      color: #ffffff;
+      border: 1px solid #dc2626;
+    }
+
+    .btn-danger:hover {
+      background: #dc2626;
+    }
+
+    .btn-sm {
+      padding: 8px 14px;
+      font-size: 0.82rem;
+      border-radius: 6px;
+    }
+
+    .btn-lg {
+      padding: 15px 28px;
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    /* ── TIP & INFO CARDS ── */
+    .tip-card {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 18px 20px;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      font-size: 0.85rem;
+      line-height: 1.55;
+      color: var(--text-muted);
+    }
+
+    .tip-card.tip-glow {
+      border-left: 4px solid var(--text);
+    }
+
+    .tip-icon {
+      font-size: 1.25rem;
+      flex-shrink: 0;
+      line-height: 1;
+      margin-top: 2px;
+    }
+
+    .tip-content strong {
+      color: var(--text);
+      display: block;
+      margin-bottom: 4px;
+      font-size: 0.9rem;
+    }
+
+    /* ── LIVE SHARE PAGE ── */
+    #liveScreen {
+      display: none;
+    }
+
+    .live-hero-card {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 32px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+      box-shadow: var(--shadow);
+    }
+
+    .live-hero-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    @media (max-width: 520px) {
+      .live-hero-actions {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .join-box {
+      display: flex;
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .features-row {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    @media (max-width: 580px) {
+      .features-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .feature-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
       display: flex;
       flex-direction: column;
       gap: 6px;
-      align-items: center;
+      font-size: 0.8rem;
+      color: var(--text-muted);
     }
 
-    .footer-links {
+    .feature-item strong {
+      color: var(--text);
+      font-size: 0.88rem;
+    }
+
+    /* ── HOST DASHBOARD ── */
+    #hostDashboardScreen {
+      display: none;
+      min-height: 100vh;
+      padding: 80px 20px 40px;
+      width: 100%;
+      max-width: 1080px;
+      margin: 0 auto;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .dashboard-header {
       display: flex;
       align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 14px;
+      padding: 18px 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+    }
+
+    .dashboard-header-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .room-code-badge {
+      font-family: monospace;
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--text);
+      padding: 6px 14px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      letter-spacing: 0.05em;
+    }
+
+    .meta-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-full);
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .dashboard-layout {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 20px;
+    }
+
+    @media (max-width: 860px) {
+      .dashboard-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Video stage */
+    .video-stage {
+      background: #000000;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      position: relative;
+      aspect-ratio: 16 / 9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .video-stage video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      background: #000000;
+    }
+
+    .video-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      color: #888888;
+      padding: 40px 20px;
+      text-align: center;
+    }
+
+    .video-placeholder svg {
+      width: 64px;
+      height: 64px;
+      stroke: #555555;
+      fill: none;
+      stroke-width: 1.5;
+    }
+
+    .video-placeholder h3 {
+      color: #ffffff;
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    .video-placeholder p {
+      max-width: 380px;
+      font-size: 0.88rem;
+      line-height: 1.5;
+      color: #aaaaaa;
+    }
+
+    .stage-overlay {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      right: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    .stage-overlay > * {
+      pointer-events: auto;
+    }
+
+    /* Controls bar */
+    .dashboard-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 16px 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+    }
+
+    .controls-left,
+    .controls-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* Side panel */
+    .dashboard-sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .sidebar-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .sidebar-card-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .share-link-input-wrap {
+      display: flex;
       gap: 8px;
     }
 
-    .footer-links a {
+    .share-link-input {
+      flex: 1;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 8px 12px;
+      font-size: 0.8rem;
+      font-family: monospace;
       color: var(--text-muted);
-      text-decoration: underline;
-      cursor: pointer;
-      transition: color var(--transition);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      outline: none;
     }
 
-    .footer-links a:hover {
-      color: var(--text);
+    .chat-box {
+      display: flex;
+      flex-direction: column;
+      height: 240px;
     }
 
-    /* MODAL */
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 0.82rem;
+    }
+
+    .chat-empty {
+      color: var(--text-dim);
+      text-align: center;
+      margin: auto;
+      font-size: 0.78rem;
+    }
+
+    .chat-msg-item {
+      background: var(--surface2);
+      border-radius: 8px;
+      padding: 6px 10px;
+      line-height: 1.4;
+    }
+
+    .chat-msg-sender {
+      font-weight: 700;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+    }
+
+    .chat-input-wrap {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .chat-input {
+      flex: 1;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: var(--radius);
+      color: var(--input-text);
+      padding: 8px 10px;
+      font-size: 0.82rem;
+      outline: none;
+    }
+
+    /* ── LIVE VIEWER SCREEN ── */
+    #liveViewerScreen {
+      display: none;
+      min-height: 100vh;
+      flex-direction: column;
+      background: var(--bg);
+      position: relative;
+    }
+
+    .live-viewer-header {
+      padding: 14px 28px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+      backdrop-filter: blur(12px);
+      z-index: 50;
+    }
+
+    .viewer-header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .live-viewer-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 20px 40px;
+      gap: 18px;
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .viewer-video-container {
+      width: 100%;
+      background: #000000;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      position: relative;
+      aspect-ratio: 16 / 9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .viewer-video-container video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      background: #000000;
+    }
+
+    .viewer-loading-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      color: #ffffff;
+      z-index: 10;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .viewer-controls-bar {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 14px 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+    }
+
+    /* ── TOAST NOTIFICATION ── */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--text);
+      color: var(--bg);
+      padding: 12px 24px;
+      border-radius: var(--radius-full);
+      font-size: 0.88rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.25s ease;
+    }
+
+    .toast-container.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* ── MODALS (Upload / Privacy / Terms) ── */
     .modal-overlay {
       position: fixed;
       inset: 0;
       background: rgba(0, 0, 0, 0.75);
       backdrop-filter: blur(6px);
-      z-index: 100;
+      z-index: 200;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -521,7 +1138,6 @@
       color: var(--text);
     }
 
-    /* Drop zone */
     .drop-zone {
       border: 2px dashed var(--border);
       border-radius: var(--radius-lg);
@@ -573,7 +1189,6 @@
       margin-top: 6px;
     }
 
-    /* File preview */
     .file-preview {
       display: none;
       align-items: center;
@@ -598,7 +1213,6 @@
       background: var(--icon-bg);
       color: var(--text);
       border: 1.5px solid var(--icon-border);
-      transition: background var(--transition), color var(--transition), border-color var(--transition);
     }
 
     .badge-pdf,
@@ -624,7 +1238,6 @@
       white-space: nowrap;
     }
 
-    /* Publish section */
     .publish-section {
       display: none;
       flex-direction: column;
@@ -675,7 +1288,6 @@
       color: var(--text-muted);
     }
 
-    /* Progress */
     .progress-bar-wrap {
       background: var(--border);
       border-radius: 99px;
@@ -690,7 +1302,7 @@
 
     .progress-bar {
       height: 100%;
-      background: #fff;
+      background: var(--text);
       width: 0%;
       transition: width 0.3s ease;
       border-radius: 99px;
@@ -713,7 +1325,7 @@
       justify-content: flex-end;
     }
 
-    /* VIEWER */
+    /* ── DOCUMENT VIEWER SCREEN (PDF / PPT) ── */
     #viewerScreen {
       display: none;
       min-height: 100vh;
@@ -751,24 +1363,6 @@
       height: 30px;
       border-radius: 8px;
       box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
-    }
-
-    #viewerScreen ~ .theme-toggle {
-      top: 12px;
-    }
-
-    .brand-c {
-      color: var(--text-muted);
-    }
-
-    .viewer-page-name {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      font-family: monospace;
-      padding: 4px 12px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 6px;
     }
 
     .viewer-body {
@@ -870,9 +1464,7 @@
     }
 
     @keyframes spin {
-      to {
-        transform: rotate(360deg);
-      }
+      to { transform: rotate(360deg); }
     }
 
     @keyframes loading-pulse {
@@ -883,13 +1475,6 @@
     @keyframes loading-slide {
       0% { transform: translateX(-115%); }
       100% { transform: translateX(245%); }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      .viewer-loading-logo,
-      .viewer-loading-track::after {
-        animation: none;
-      }
     }
 
     .not-found-msg {
@@ -922,7 +1507,6 @@
       pointer-events: none;
     }
 
-    /* PPT container */
     #pptContainer .viewer-body-scroll {
       pointer-events: auto;
       width: 100%;
@@ -946,33 +1530,51 @@
       box-shadow: var(--shadow);
     }
 
-    @media (max-width: 500px) {
-      #homeScreen {
-        padding: 72px 16px 16px;
-      }
+    .home-footer {
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      align-items: center;
+      margin-top: 10px;
+    }
 
-      .theme-toggle {
-        top: 10px;
-        right: 14px;
-        min-width: 38px;
-        min-height: 38px;
-        padding: 8px;
-      }
+    .footer-links {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
 
-      #viewerScreen ~ .theme-toggle {
-        top: 14px;
-      }
+    .footer-links a {
+      color: var(--text-muted);
+      text-decoration: underline;
+      cursor: pointer;
+      transition: color var(--transition);
+    }
 
-      .options-grid {
-        grid-template-columns: 1fr;
-      }
+    .footer-links a:hover {
+      color: var(--text);
+    }
 
+    @media (max-width: 580px) {
+      .top-nav {
+        padding: 0 14px;
+        height: 58px;
+      }
+      .nav-tab-btn {
+        padding: 6px 12px;
+        font-size: 0.78rem;
+      }
+      .nav-brand span {
+        display: none;
+      }
+      .screen-container {
+        padding: 78px 16px 30px;
+      }
       .logo-block h1 {
         font-size: 2.2rem;
-      }
-
-      .modal {
-        padding: 28px 20px;
       }
     }
   </style>
@@ -980,14 +1582,57 @@
 
 <body>
 
-  <!-- HOME -->
-  <div id="homeScreen">
-    <div class="home-inner">
+  <!-- GLOBAL TOP NAVIGATION BAR -->
+  <header class="top-nav" id="topNav">
+    <div class="nav-brand" id="navBrandLink">
+      <img class="nav-brand-mark" src="icon.png" alt="DONTCBOARD" />
+      <span>DONT<span class="brand-c">C</span>BOARD</span>
+    </div>
+
+    <nav class="nav-tabs" aria-label="Main Navigation">
+      <button class="nav-tab-btn active" id="tabDocuments">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+        </svg>
+        <span>Documents</span>
+      </button>
+
+      <button class="nav-tab-btn" id="tabLiveShare">
+        <span class="live-dot"></span>
+        <span>Live Share</span>
+      </button>
+    </nav>
+
+    <div class="nav-actions">
+      <!-- Theme toggle -->
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode" title="Toggle theme">
+        <svg class="toggle-icon-sun" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="5" />
+          <line x1="12" y1="1" x2="12" y2="3" />
+          <line x1="12" y1="21" x2="12" y2="23" />
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+          <line x1="1" y1="12" x2="3" y2="12" />
+          <line x1="21" y1="12" x2="23" y2="12" />
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+        </svg>
+        <svg class="toggle-icon-moon" viewBox="0 0 24 24">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- 1. HOME SCREEN (DOCUMENT PUBLISHING) -->
+  <main class="screen-container" id="homeScreen">
+    <div class="screen-inner">
 
       <div class="logo-block">
         <img class="brand-mark" src="icon.png" alt="DONTCBOARD logo" />
         <h1>DONT<span class="brand-c">C</span>BOARD</h1>
-        <p>Publish documents instantly. Share with a page name.</p>
+        <p>Publish documents instantly or broadcast your screen live in real-time.</p>
       </div>
 
       <div class="options-grid">
@@ -1002,17 +1647,32 @@
           <div class="option-label">Upload File</div>
           <div class="option-desc">Publish a PDF or PowerPoint and get a shareable page</div>
         </div>
+
+        <div class="option-card card-featured" id="homeLiveShareCard" role="button" tabindex="0" aria-label="Live Screen Share">
+          <div class="option-icon">
+            <svg viewBox="0 0 24 24">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+              <line x1="8" y1="21" x2="16" y2="21" />
+              <line x1="12" y1="17" x2="12" y2="21" />
+            </svg>
+          </div>
+          <div class="option-label">
+            <span class="live-dot"></span>
+            <span>Live Screen Share</span>
+          </div>
+          <div class="option-desc">Stream your screen live with anyone via link or 6-digit code</div>
+        </div>
       </div>
 
-      <div class="divider">or go directly to a page</div>
+      <div class="divider">or go directly to a document page</div>
 
       <div class="goto-block">
-        <input type="text" id="pageNameInput" placeholder="Enter page name…" autocomplete="off" spellcheck="false" />
+        <input type="text" id="pageNameInput" placeholder="Enter document page name…" autocomplete="off" spellcheck="false" />
         <button class="btn btn-white" id="gotoBtn">Go</button>
       </div>
 
       <div class="home-footer">
-        <div>Files are stored in AWS cloud services</div>
+        <div>High-performance cloud document publishing &amp; real-time streaming</div>
         <div class="footer-links">
           <a id="privacyLink" href="/privacy">Privacy Policy</a>
           <span>·</span>
@@ -1020,9 +1680,306 @@
         </div>
       </div>
     </div>
-  </div>
+  </main>
 
-  <!-- UPLOAD MODAL -->
+  <!-- 2. LIVE SHARE HUB SCREEN (/live) -->
+  <section class="screen-container" id="liveScreen">
+    <div class="screen-inner">
+
+      <div class="logo-block">
+        <div class="live-badge" style="margin-bottom: 12px;">
+          <span class="live-dot"></span>
+          <span>WebRTC Real-Time Broadcast</span>
+        </div>
+        <h1>Live Screen Share</h1>
+        <p>Share your screen live with anyone using a secure room link or 6-digit room code.</p>
+      </div>
+
+      <!-- Action Hero Card -->
+      <div class="live-hero-card">
+        <div class="live-hero-actions">
+          <!-- Start Live Share -->
+          <div class="option-card card-featured" id="startLiveShareCard" style="height: 100%; justify-content: space-between;">
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
+              <div class="option-icon">
+                <svg viewBox="0 0 24 24">
+                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+              </div>
+              <div class="option-label">Host Live Session</div>
+              <div class="option-desc">Create a live room and broadcast your screen to viewers</div>
+            </div>
+            <button class="btn btn-white btn-lg" id="btnStartLiveShare" style="width: 100%; margin-top: 12px;">
+              <span class="live-dot"></span>
+              <span>Start Live Share</span>
+            </button>
+          </div>
+
+          <!-- Join Live Share -->
+          <div class="option-card" style="height: 100%; justify-content: space-between;">
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%;">
+              <div class="option-icon">
+                <svg viewBox="0 0 24 24">
+                  <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                  <polyline points="10 17 15 12 10 7"></polyline>
+                  <line x1="15" y1="12" x2="3" y2="12"></line>
+                </svg>
+              </div>
+              <div class="option-label">Join Live Session</div>
+              <div class="option-desc">Enter the 6-digit room code or EW-ID provided by host</div>
+              <div class="join-box" style="width: 100%;">
+                <input type="text" class="room-code-input" id="joinRoomCodeInput" placeholder="e.g. 482931 or EW-482931" maxlength="12" />
+              </div>
+            </div>
+            <button class="btn btn-outline btn-lg" id="btnJoinLiveShare" style="width: 100%; margin-top: 12px;">
+              Join Room
+            </button>
+          </div>
+        </div>
+
+        <!-- Multi-tab workflow tip -->
+        <div class="tip-card tip-glow">
+          <div class="tip-icon">💡</div>
+          <div class="tip-content">
+            <strong>Multi-Tab &amp; Application Sharing Tip</strong>
+            For sharing while switching between different browser tabs, PDFs, PPTs, or applications, select <strong>Entire Screen</strong> when your browser asks what you want to share.
+          </div>
+        </div>
+      </div>
+
+      <!-- Feature Badges -->
+      <div class="features-row">
+        <div class="feature-item">
+          <strong>⚡ Peer-to-Peer WebRTC</strong>
+          <span>Ultra-low latency streaming direct between browsers.</span>
+        </div>
+        <div class="feature-item">
+          <strong>🔒 Zero Software Needed</strong>
+          <span>Viewers watch directly on mobile, tablet, or desktop.</span>
+        </div>
+        <div class="feature-item">
+          <strong>🔊 Audio &amp; Video</strong>
+          <span>Transmit system or tab audio seamlessly when selected.</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- 3. HOST DASHBOARD SCREEN -->
+  <section id="hostDashboardScreen">
+    <div class="dashboard-header">
+      <div class="dashboard-header-left">
+        <div class="live-badge" id="hostLiveBadge">
+          <span class="live-dot"></span>
+          <span id="hostLiveBadgeText">READY TO SHARE</span>
+        </div>
+        <div class="room-code-badge" id="hostRoomCodeDisplay">EW-000000</div>
+        <div class="meta-badge" id="hostViewerCountBadge">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          <span id="hostViewerCountText">0 Viewers</span>
+        </div>
+        <div class="meta-badge" id="hostAudioBadge">
+          <span id="hostAudioIcon">🔇</span>
+          <span id="hostAudioText">Audio unavailable</span>
+        </div>
+      </div>
+
+      <div class="controls-right">
+        <button class="btn btn-outline btn-sm" id="hostBtnCopyLink">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+          <span>Copy Link</span>
+        </button>
+        <button class="btn btn-outline btn-sm" id="hostBtnShare">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+          <span>Share</span>
+        </button>
+        <button class="btn btn-danger btn-sm" id="hostBtnEndSession">End Session</button>
+      </div>
+    </div>
+
+    <!-- Main Dashboard Body -->
+    <div class="dashboard-layout">
+      <!-- Left Column: Video Stage & Controls -->
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <div class="video-stage" id="hostVideoStage">
+          <video id="hostVideoPreview" autoplay muted playsinline style="display: none;"></video>
+          
+          <div class="video-placeholder" id="hostVideoPlaceholder">
+            <svg viewBox="0 0 24 24">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+              <line x1="8" y1="21" x2="16" y2="21" />
+              <line x1="12" y1="17" x2="12" y2="21" />
+            </svg>
+            <h3>Screen Capture Not Started</h3>
+            <p>Click "Start Screen Sharing" below and choose <strong>Entire Screen</strong> so viewers can watch as you switch between tabs and apps.</p>
+            <button class="btn btn-white btn-lg" id="hostBtnStartCapturePlaceholder">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+              <span>Start Screen Sharing</span>
+            </button>
+          </div>
+
+          <div class="stage-overlay" id="hostStageOverlay" style="display: none;">
+            <div class="live-badge">
+              <span class="live-dot"></span>
+              <span>HOST PREVIEW</span>
+            </div>
+            <button class="btn btn-outline btn-sm" id="hostBtnFullscreenPreview" style="background: rgba(0,0,0,0.6); color: #fff; border-color: rgba(255,255,255,0.3);">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
+              <span>Fullscreen</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Controls Bar -->
+        <div class="dashboard-controls">
+          <div class="controls-left">
+            <button class="btn btn-white" id="hostBtnStartCapture">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+              <span>Start Screen Sharing</span>
+            </button>
+            <button class="btn btn-outline" id="hostBtnStopCapture" style="display: none;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="12" height="12"></rect></svg>
+              <span>Stop Sharing</span>
+            </button>
+          </div>
+
+          <div class="controls-right">
+            <span style="font-size: 0.8rem; color: var(--text-muted);" id="hostStreamStatusText">Ready to capture</span>
+          </div>
+        </div>
+
+        <!-- Tip Box -->
+        <div class="tip-card tip-glow">
+          <div class="tip-icon">💡</div>
+          <div class="tip-content">
+            <strong>Multi-Tab &amp; PDF/PowerPoint Workflow</strong>
+            1. Click <strong>Start Screen Sharing</strong><br/>
+            2. When the browser dialog appears, choose <strong>Entire Screen</strong><br/>
+            3. Switch freely between Chrome tabs, documents, slides, and apps. Your viewers will watch everything in real time!
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Share Info & Live Chat -->
+      <div class="dashboard-sidebar">
+        <!-- Room Info Card -->
+        <div class="sidebar-card">
+          <div class="sidebar-card-title">
+            <span>Share Room Link</span>
+          </div>
+          <div class="share-link-input-wrap">
+            <input type="text" class="share-link-input" id="hostShareLinkInput" readonly />
+            <button class="btn btn-white btn-sm" id="hostBtnCopyLinkSide">Copy</button>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn-outline btn-sm" id="hostBtnCopyCode" style="flex: 1;">Copy Code</button>
+            <button class="btn btn-outline btn-sm" id="hostBtnShareSide" style="flex: 1;">Share...</button>
+          </div>
+        </div>
+
+        <!-- Live Chat Card -->
+        <div class="sidebar-card" style="flex: 1;">
+          <div class="sidebar-card-title">
+            <span>Live Chat</span>
+            <span class="meta-badge" style="font-size: 0.72rem;" id="hostChatCount">0 msgs</span>
+          </div>
+          <div class="chat-box">
+            <div class="chat-messages" id="hostChatMessages">
+              <div class="chat-empty">No messages yet. Viewers can send questions and comments here.</div>
+            </div>
+            <div class="chat-input-wrap">
+              <input type="text" class="chat-input" id="hostChatInput" placeholder="Send a message to viewers…" maxlength="200" />
+              <button class="btn btn-white btn-sm" id="hostBtnSendChat">Send</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. VIEWER SCREEN (/live/:roomId) -->
+  <section id="liveViewerScreen">
+    <div class="live-viewer-header">
+      <div class="viewer-header-left">
+        <div class="viewer-logo" id="viewerNavBrand">
+          <img class="viewer-logo-mark" src="icon.png" alt="" />
+          <span>DONT<span class="brand-c">C</span>BOARD</span>
+        </div>
+        <div class="live-badge" id="viewerLiveBadge">
+          <span class="live-dot"></span>
+          <span id="viewerLiveBadgeText">CONNECTING</span>
+        </div>
+        <div class="room-code-badge" id="viewerRoomCodeDisplay">EW-000000</div>
+      </div>
+
+      <div class="controls-right">
+        <button class="btn btn-outline btn-sm" id="viewerBtnFullscreen">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
+          <span>Full Screen</span>
+        </button>
+        <button class="btn btn-outline btn-sm" id="viewerBtnLeave">Leave</button>
+      </div>
+    </div>
+
+    <div class="live-viewer-main">
+      <div class="viewer-video-container" id="viewerVideoContainer">
+        <video id="viewerStreamVideo" autoplay playsinline></video>
+
+        <!-- Loading Overlay -->
+        <div class="viewer-loading-overlay" id="viewerLoadingOverlay">
+          <div class="spinner"></div>
+          <h3 id="viewerLoadingTitle">Connecting to Live Session</h3>
+          <p id="viewerLoadingSubtitle" style="font-size: 0.85rem; color: #aaaaaa; max-width: 320px;">
+            Establishing encrypted WebRTC connection with host…
+          </p>
+        </div>
+
+        <!-- Session Ended State -->
+        <div class="viewer-loading-overlay" id="viewerEndedOverlay" style="display: none; background: rgba(0,0,0,0.92);">
+          <div style="font-size: 2.5rem; margin-bottom: 8px;">📡</div>
+          <h3 style="font-size: 1.4rem;">Live Sharing Ended</h3>
+          <p style="font-size: 0.9rem; color: #aaaaaa; max-width: 360px;" id="viewerEndedReason">
+            The host has stopped sharing their screen or closed the room.
+          </p>
+          <div style="display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap; justify-content: center;">
+            <button class="btn btn-white" id="viewerBtnReturnHome">Return to Homepage</button>
+            <button class="btn btn-outline" id="viewerBtnStartOwnLive">Start Your Own Live Share</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Controls & Chat Bar -->
+      <div class="viewer-controls-bar">
+        <div class="controls-left">
+          <button class="btn btn-outline btn-sm" id="viewerBtnAudioToggle">
+            <span id="viewerAudioIcon">🔊</span>
+            <span id="viewerAudioText">Mute Audio</span>
+          </button>
+          <span class="meta-badge" id="viewerConnectionState">WebRTC: Connecting</span>
+        </div>
+
+        <div class="controls-right" style="flex: 1; max-width: 420px;">
+          <div class="chat-input-wrap" style="width: 100%; margin: 0;">
+            <input type="text" class="chat-input" id="viewerChatInput" placeholder="Send a question/comment to host…" maxlength="200" />
+            <button class="btn btn-white btn-sm" id="viewerBtnSendChat">Send</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat Feed -->
+      <div class="sidebar-card" style="width: 100%;" id="viewerChatSection">
+        <div class="sidebar-card-title">
+          <span>Live Session Messages</span>
+        </div>
+        <div class="chat-messages" id="viewerChatMessages" style="max-height: 140px;">
+          <div class="chat-empty">No messages yet. Send a note above to say hello!</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. UPLOAD MODAL -->
   <div class="modal-overlay" id="uploadModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <div class="modal">
       <div class="modal-header">
@@ -1073,7 +2030,7 @@
     </div>
   </div>
 
-  <!-- VIEWER -->
+  <!-- 6. DOCUMENT VIEWER SCREEN (PDF/PPT) -->
   <div id="viewerScreen">
     <div class="viewer-header">
       <div class="viewer-logo" id="viewerLogoLink">
@@ -1109,7 +2066,7 @@
     </div>
   </div>
 
-  <!-- PRIVACY POLICY MODAL -->
+  <!-- 7. PRIVACY POLICY MODAL -->
   <div class="modal-overlay" id="privacyModal" role="dialog" aria-modal="true" aria-labelledby="privacyTitle">
     <div class="modal" style="max-width: 540px;">
       <div class="modal-header">
@@ -1121,10 +2078,9 @@
       </div>
       <div style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.6; display: flex; flex-direction: column; gap: 12px; max-height: 60vh; overflow-y: auto;">
         <p><strong>1. Information We Store</strong><br/>When you publish a file, DONTCBOARD stores the document in Amazon S3 and stores the page name, file name, file type, file size, storage key, content type, and publication time in Amazon DynamoDB. The app also keeps a browser-local copy in IndexedDB for fallback access.</p>
-        <p><strong>2. How We Use Information</strong><br/>We use this information to upload, store, retrieve, and display your published documents at the page name you choose. Published pages may be accessible to anyone who has the page address.</p>
-        <p><strong>3. AWS Services and Access</strong><br/>Document files are uploaded using temporary, signed AWS URLs. Viewer URLs are also temporary. AWS may process and store data as required to provide these services under its own policies and terms. If the cloud service is unavailable, the app may use the browser-local copy.</p>
-        <p><strong>4. Your Responsibilities and Choices</strong><br/>Do not upload confidential or sensitive information unless you are authorized to do so. Please contact the DONTCBOARD operator if you need a published document or its associated page data reviewed or removed.</p>
-        <p><strong>5. Policy Changes</strong><br/>This policy may be updated when the service or its data practices change. Continued use of DONTCBOARD after an update means you acknowledge the revised policy.</p>
+        <p><strong>2. Live Screen Share Privacy</strong><br/>Live Screen Sharing is direct browser-to-browser peer-to-peer WebRTC streaming. No screen video or audio streams are recorded or stored on any server. Temporary signaling data is purged after the session ends.</p>
+        <p><strong>3. AWS Services and Access</strong><br/>Document files are uploaded using temporary, signed AWS URLs. Viewer URLs are also temporary.</p>
+        <p><strong>4. Your Responsibilities and Choices</strong><br/>Do not upload or share confidential or sensitive information unless you are authorized to do so.</p>
       </div>
       <div class="modal-actions">
         <button class="btn btn-white" id="privacyOkBtn">Close</button>
@@ -1132,7 +2088,7 @@
     </div>
   </div>
 
-  <!-- TERMS OF SERVICE MODAL -->
+  <!-- 8. TERMS OF SERVICE MODAL -->
   <div class="modal-overlay" id="termsModal" role="dialog" aria-modal="true" aria-labelledby="termsTitle">
     <div class="modal" style="max-width: 540px;">
       <div class="modal-header">
@@ -1144,11 +2100,8 @@
       </div>
       <div style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.6; display: flex; flex-direction: column; gap: 12px; max-height: 60vh; overflow-y: auto;">
         <p><strong>1. Acceptance of Terms</strong><br/>By using DONTCBOARD, you agree to these Terms of Service. If you do not agree, please discontinue use.</p>
-        <p><strong>2. User Content Responsibility</strong><br/>You are responsible for the documents you upload, including obtaining all necessary rights and permissions. Do not upload unlawful, infringing, or confidential content that you are not authorized to share.</p>
-        <p><strong>3. Cloud Storage and Public Pages</strong><br/>Uploaded documents are stored using Amazon S3 and related AWS services, with a browser-local copy used as a fallback. A published document may be viewed by anyone who has its page address. Do not rely on DONTCBOARD as the sole copy of an important document.</p>
-        <p><strong>4. Service Provision</strong><br/>DONTCBOARD is provided "as is" without warranties of any kind. Availability, storage, signed-link access, and data retention may be affected by maintenance, AWS service availability, configuration changes, or other circumstances beyond our control.</p>
-        <p><strong>5. Intellectual Property</strong><br/>All original branding and code belong to DONTCBOARD. Document content rights remain entirely with the respective document owner.</p>
-        <p><strong>6. Changes to These Terms</strong><br/>We may update these Terms when the service changes. Continued use of DONTCBOARD after an update means you accept the revised Terms.</p>
+        <p><strong>2. User Content &amp; Live Sharing Responsibility</strong><br/>You are responsible for the documents and screen broadcasts you share. Do not broadcast or upload unlawful, infringing, or unauthorized confidential content.</p>
+        <p><strong>3. Service Provision</strong><br/>DONTCBOARD is provided "as is" without warranties of any kind.</p>
       </div>
       <div class="modal-actions">
         <button class="btn btn-white" id="termsOkBtn">Close</button>
@@ -1156,30 +2109,14 @@
     </div>
   </div>
 
-  <!-- Theme toggle (global, floats over both screens) -->
-  <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
-    <!-- Sun icon -->
-    <svg class="toggle-icon-sun" viewBox="0 0 24 24">
-      <circle cx="12" cy="12" r="5" />
-      <line x1="12" y1="1" x2="12" y2="3" />
-      <line x1="12" y1="21" x2="12" y2="23" />
-      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-      <line x1="1" y1="12" x2="3" y2="12" />
-      <line x1="21" y1="12" x2="23" y2="12" />
-      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-    </svg>
-    <!-- Moon icon -->
-    <svg class="toggle-icon-moon" viewBox="0 0 24 24">
-      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-    </svg>
-    <span class="toggle-label"></span>
-  </button>
+  <!-- 9. TOAST NOTIFICATION -->
+  <div class="toast-container" id="toastNotification" role="status" aria-live="polite">
+    <span id="toastMessage">Notification</span>
+  </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script>
-    // ── Theme toggle ──────────────────────────────────────────────
+    // ── THEME MANAGEMENT ──────────────────────────────────────────
     (function () {
       const saved = localStorage.getItem('ew-theme');
       if (saved === 'dark') document.documentElement.classList.add('dark');
@@ -1196,7 +2133,62 @@
         'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     }
 
-    // ── IndexedDB ─────────────────────────────────────────────────
+    // ── TOAST HELPER ──────────────────────────────────────────────
+    let toastTimeout = null;
+    function showToast(msg, duration = 2800) {
+      const toast = document.getElementById('toastNotification');
+      const toastMsg = document.getElementById('toastMessage');
+      if (!toast || !toastMsg) return;
+      toastMsg.textContent = msg;
+      toast.classList.add('show');
+      if (toastTimeout) clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove('show');
+      }, duration);
+    }
+
+    // ── CLIPBOARD & SHARE HELPERS ─────────────────────────────────
+    async function copyToClipboard(text, successMsg = 'Copied to clipboard!') {
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(text);
+          showToast(successMsg);
+          return true;
+        }
+      } catch (e) {}
+
+      // Fallback
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      try {
+        document.execCommand('copy');
+        showToast(successMsg);
+      } catch (err) {
+        prompt('Copy this link:', text);
+      }
+      document.body.removeChild(ta);
+      return true;
+    }
+
+    async function triggerShare(title, text, url) {
+      if (navigator.share) {
+        try {
+          await navigator.share({ title, text, url });
+          return true;
+        } catch (err) {
+          if (err.name !== 'AbortError') copyToClipboard(url, 'Live share link copied!');
+        }
+      } else {
+        copyToClipboard(url, 'Live share link copied!');
+      }
+    }
+
+    // ── INDEXEDDB LOCAL STORE (DOCUMENTS) ─────────────────────────
     const DB_NAME = 'EasyWriteDB', STORE = 'pages';
 
     function openDB() {
@@ -1227,53 +2219,62 @@
       });
     }
 
-    // ── Routing (Clean path URL + Hash fallback) ─────────────────────
+    // ── SCREEN VISIBILITY MANAGER ─────────────────────────────────
     const homeScreen = document.getElementById('homeScreen');
+    const liveScreen = document.getElementById('liveScreen');
+    const hostDashboardScreen = document.getElementById('hostDashboardScreen');
+    const liveViewerScreen = document.getElementById('liveViewerScreen');
     const viewerScreen = document.getElementById('viewerScreen');
+    const topNav = document.getElementById('topNav');
 
-    function getPageFromUrl() {
-      // 1. Check Query string (e.g. index.html?anypage or domain.com/?anypage)
-      const search = location.search.replace(/^\?/, '').trim();
-      if (search) {
-        const queryVal = search.split('&')[0].replace(/^(p|page)=/i, '');
-        const slug = slugify(decodeURIComponent(queryVal));
-        if (slug && slug !== 'index-html') return slug;
-      }
+    const tabDocuments = document.getElementById('tabDocuments');
+    const tabLiveShare = document.getElementById('tabLiveShare');
 
-      // 2. Check Hash (e.g. index.html#anypage or domain.com/#anypage)
-      const hash = location.hash.replace('#', '').trim();
-      if (hash) {
-        const slug = slugify(decodeURIComponent(hash));
-        if (slug) return slug;
-      }
-
-      // 3. Check Pathname (e.g. domain.com/anypage)
-      let rawPath = decodeURIComponent(location.pathname);
-      rawPath = rawPath.replace(/\/index\.html?$/i, '').replace(/^\/+|\/+$/g, '');
-      if (rawPath) {
-        const parts = rawPath.split('/');
-        const lastPart = parts[parts.length - 1];
-        if (lastPart && !lastPart.includes('.') && !/^[a-zA-Z]:$/.test(lastPart)) {
-          const slug = slugify(lastPart);
-          if (slug) return slug;
-        }
-      }
-
-      return null;
-    }
-
-    function showHome() {
-      homeScreen.style.display = 'flex';
+    function hideAllScreens() {
+      homeScreen.style.display = 'none';
+      liveScreen.style.display = 'none';
+      hostDashboardScreen.style.display = 'none';
+      liveViewerScreen.style.display = 'none';
       viewerScreen.style.display = 'none';
-      document.title = 'DONTCBOARD – Share Documents Instantly';
-      updateCanonical('/');
-      if (typeof privacyModal !== 'undefined') privacyModal.classList.remove('open');
-      if (typeof termsModal !== 'undefined') termsModal.classList.remove('open');
+      topNav.style.display = 'flex';
       document.removeEventListener('keydown', blockShortcuts, true);
     }
-    function showViewer() {
-      homeScreen.style.display = 'none';
+
+    function showHomeScreen() {
+      hideAllScreens();
+      homeScreen.style.display = 'flex';
+      tabDocuments.classList.add('active');
+      tabLiveShare.classList.remove('active');
+      document.title = 'DONTCBOARD – Share Documents Instantly';
+      updateCanonical('/');
+    }
+
+    function showLiveShareHub() {
+      hideAllScreens();
+      liveScreen.style.display = 'flex';
+      tabLiveShare.classList.add('active');
+      tabDocuments.classList.remove('active');
+      document.title = 'Live Screen Share – DONTCBOARD';
+      updateCanonical('/live');
+    }
+
+    function showHostDashboard() {
+      hideAllScreens();
+      hostDashboardScreen.style.display = 'flex';
+      tabLiveShare.classList.add('active');
+      tabDocuments.classList.remove('active');
+    }
+
+    function showLiveViewer() {
+      hideAllScreens();
+      liveViewerScreen.style.display = 'flex';
+      topNav.style.display = 'none'; // Viewer has its own dedicated header
+    }
+
+    function showDocumentViewer() {
+      hideAllScreens();
       viewerScreen.style.display = 'flex';
+      topNav.style.display = 'none';
     }
 
     function updateCanonical(pathname) {
@@ -1287,73 +2288,107 @@
       }
     }
 
-    function navigateTo(name) {
+    function navigateTo(path) {
+      const clean = path.startsWith('/') ? path : '/' + path;
       if (location.protocol === 'file:') {
-        location.hash = name;
+        location.hash = clean.replace(/^\//, '');
       } else {
-        history.pushState({ page: name }, '', '/' + name);
-        route();
+        history.pushState({}, '', clean);
       }
+      route();
     }
 
-    function goHome() {
+    // ── ROUTER ───────────────────────────────────────────────────
+    function getRouteInfo() {
+      let rawPath = '';
       if (location.protocol === 'file:') {
-        location.hash = '';
+        rawPath = location.hash.replace(/^#/, '');
       } else {
-        history.pushState({}, '', '/');
+        rawPath = decodeURIComponent(location.pathname);
       }
-      showHome();
+
+      // Check query string
+      const search = location.search.replace(/^\?/, '').trim();
+      if (search && !rawPath) {
+        rawPath = search;
+      }
+
+      rawPath = rawPath.replace(/\/index\.html?$/i, '').replace(/^\/+|\/+$/g, '');
+
+      if (!rawPath) return { type: 'home' };
+
+      const parts = rawPath.split('/');
+
+      if (parts[0] === 'live') {
+        if (parts.length > 1 && parts[1]) {
+          return { type: 'live-viewer', roomId: parts[1].toUpperCase() };
+        }
+        return { type: 'live-hub' };
+      }
+
+      if (rawPath === 'privacy') return { type: 'privacy' };
+      if (rawPath === 'terms') return { type: 'terms' };
+
+      // Check if it's a room code directly entered e.g. /EW-482931
+      if (/^EW-[A-Z0-9]{4,10}$/i.test(parts[parts.length - 1])) {
+        return { type: 'live-viewer', roomId: parts[parts.length - 1].toUpperCase() };
+      }
+
+      // Otherwise, it's a document page slug
+      return { type: 'document', slug: slugify(parts[parts.length - 1]) };
+    }
+
+    function route() {
+      const info = getRouteInfo();
+
+      if (info.type === 'home') {
+        showHomeScreen();
+        return;
+      }
+
+      if (info.type === 'live-hub') {
+        showLiveShareHub();
+        return;
+      }
+
+      if (info.type === 'live-viewer') {
+        joinLiveSessionAsViewer(info.roomId);
+        return;
+      }
+
+      if (info.type === 'privacy') {
+        showHomeScreen();
+        privacyModal.classList.add('open');
+        updateCanonical('/privacy');
+        return;
+      }
+
+      if (info.type === 'terms') {
+        showHomeScreen();
+        termsModal.classList.add('open');
+        updateCanonical('/terms');
+        return;
+      }
+
+      if (info.type === 'document') {
+        loadPage(info.slug);
+        return;
+      }
+
+      showHomeScreen();
     }
 
     window.addEventListener('popstate', route);
     window.addEventListener('hashchange', route);
     window.addEventListener('load', route);
 
-    function route() {
-      const routePath = location.pathname.replace(/\/+$/, '') || '/';
-      if (routePath === '/privacy' || routePath === '/terms') {
-        showHome();
-        const policyModal = routePath === '/privacy' ? privacyModal : termsModal;
-        policyModal.classList.add('open');
-        updateCanonical(routePath);
-        return;
-      }
+    // ── TOP NAVIGATION LISTENERS ──────────────────────────────────
+    document.getElementById('navBrandLink').addEventListener('click', () => navigateTo('/'));
+    tabDocuments.addEventListener('click', () => navigateTo('/'));
+    tabLiveShare.addEventListener('click', () => navigateTo('/live'));
+    document.getElementById('homeLiveShareCard').addEventListener('click', () => navigateTo('/live'));
 
-      const p = getPageFromUrl();
-      p ? loadPage(p) : showHome();
-    }
-
-    // ── Home interactions ─────────────────────────────────────────
-    document.getElementById('uploadCard').addEventListener('click', openModal);
-    document.getElementById('uploadCard').addEventListener('keydown', e => e.key === 'Enter' && openModal());
-    const vCard = document.getElementById('viewCard');
-    if (vCard) vCard.addEventListener('click', () => document.getElementById('pageNameInput').focus());
-    // Privacy & Terms Modal Listeners
-    const privacyModal = document.getElementById('privacyModal');
-    const termsModal = document.getElementById('termsModal');
-
-    document.getElementById('privacyLink').addEventListener('click', () => privacyModal.classList.add('open'));
-    document.getElementById('privacyClose').addEventListener('click', () => privacyModal.classList.remove('open'));
-    document.getElementById('privacyOkBtn').addEventListener('click', () => privacyModal.classList.remove('open'));
-    privacyModal.addEventListener('click', e => { if (e.target === privacyModal) privacyModal.classList.remove('open'); });
-
-    document.getElementById('termsLink').addEventListener('click', () => termsModal.classList.add('open'));
-    document.getElementById('termsClose').addEventListener('click', () => termsModal.classList.remove('open'));
-    document.getElementById('termsOkBtn').addEventListener('click', () => termsModal.classList.remove('open'));
-    termsModal.addEventListener('click', e => { if (e.target === termsModal) termsModal.classList.remove('open'); });
-
-    document.getElementById('gotoBtn').addEventListener('click', gotoPage);
-    document.getElementById('pageNameInput').addEventListener('keydown', e => e.key === 'Enter' && gotoPage());
-    document.getElementById('goHomeLink').addEventListener('click', goHome);
-    document.getElementById('viewerLogoLink').addEventListener('click', goHome);
-
-    function gotoPage() {
-      const v = document.getElementById('pageNameInput').value.trim();
-      if (!v) return;
-      navigateTo(slugify(v));
-    }
-
-    // ── Modal ─────────────────────────────────────────────────────
+    // ── MODAL SETUP (DOCUMENT UPLOADS & POLICIES) ──────────────────
     const uploadModal = document.getElementById('uploadModal');
     const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('fileInput');
@@ -1369,12 +2404,36 @@
     const progressBar = document.getElementById('progressBar');
     const statusMsg = document.getElementById('statusMsg');
     const modalActions = document.getElementById('modalActions');
-
     let selectedFile = null;
 
+    document.getElementById('uploadCard').addEventListener('click', () => openModal());
+    document.getElementById('uploadCard').addEventListener('keydown', e => e.key === 'Enter' && openModal());
     document.getElementById('modalClose').addEventListener('click', closeModal);
     document.getElementById('cancelBtn').addEventListener('click', closeModal);
     uploadModal.addEventListener('click', e => { if (e.target === uploadModal) closeModal(); });
+
+    const privacyModal = document.getElementById('privacyModal');
+    const termsModal = document.getElementById('termsModal');
+    document.getElementById('privacyLink').addEventListener('click', () => privacyModal.classList.add('open'));
+    document.getElementById('privacyClose').addEventListener('click', () => privacyModal.classList.remove('open'));
+    document.getElementById('privacyOkBtn').addEventListener('click', () => privacyModal.classList.remove('open'));
+    document.getElementById('termsLink').addEventListener('click', () => termsModal.classList.add('open'));
+    document.getElementById('termsClose').addEventListener('click', () => termsModal.classList.remove('open'));
+    document.getElementById('termsOkBtn').addEventListener('click', () => termsModal.classList.remove('open'));
+
+    document.getElementById('gotoBtn').addEventListener('click', () => {
+      const v = document.getElementById('pageNameInput').value.trim();
+      if (!v) return;
+      if (/^EW-[A-Z0-9]{4,10}$/i.test(v) || /^\d{6}$/.test(v)) {
+        const rId = v.toUpperCase().startsWith('EW-') ? v.toUpperCase() : `EW-${v}`;
+        navigateTo(`/live/${rId}`);
+      } else {
+        navigateTo(`/${slugify(v)}`);
+      }
+    });
+    document.getElementById('pageNameInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('gotoBtn').click();
+    });
 
     function openModal(prefill) {
       resetModal();
@@ -1385,7 +2444,6 @@
       uploadModal.classList.add('open');
     }
     function closeModal() { uploadModal.classList.remove('open'); }
-
     function resetModal() {
       selectedFile = null;
       fileInput.value = '';
@@ -1410,7 +2468,7 @@
       const ext = file.name.split('.').pop().toLowerCase();
       if (!['pdf', 'ppt', 'pptx'].includes(ext)) { setStatus('Only PDF and PowerPoint files are allowed.', true); return; }
       if (file.size > 10 * 1024 * 1024) {
-        setStatus('File size exceeds the 10 MB limit. Please select a smaller file.', true);
+        setStatus('File size exceeds 10 MB limit.', true);
         fileInput.value = '';
         return;
       }
@@ -1429,22 +2487,8 @@
       urlPreviewSlug.textContent = slugify(publishPageName.value) || 'your-page-name';
     });
 
-    // ── Backend API & Cloud Integration ───────────────────────────
-    async function fetchPageFromCloud(name) {
-      try {
-        const res = await fetch(`/api/page?name=${encodeURIComponent(name)}`);
-        if (!res.ok) return null;
-        const data = await res.json();
-        return data && data.exists ? data : null;
-      } catch (err) {
-        console.warn('Could not connect to cloud API, checking local store:', err);
-        return null;
-      }
-    }
-
     async function uploadToCloud(pageName, file, onProgress) {
       const ext = file.name.split('.').pop().toLowerCase();
-      // 1. Request pre-signed S3 upload URL from server
       const reqRes = await fetch('/api/upload-request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1464,26 +2508,17 @@
 
       const { uploadUrl } = await reqRes.json();
 
-      // 2. Upload file directly to S3 via pre-signed URL with XMLHttpRequest for progress tracking
       await new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         xhr.open('PUT', uploadUrl, true);
         xhr.setRequestHeader('Content-Type', file.type || (ext === 'pdf' ? 'application/pdf' : 'application/vnd.ms-powerpoint'));
-
         xhr.upload.onprogress = (e) => {
-          if (e.lengthComputable && onProgress) {
-            onProgress(e.loaded / e.total);
-          }
+          if (e.lengthComputable && onProgress) onProgress(e.loaded / e.total);
         };
-
         xhr.onload = () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            resolve();
-          } else {
-            reject(new Error(`S3 upload failed with status ${xhr.status}`));
-          }
+          if (xhr.status >= 200 && xhr.status < 300) resolve();
+          else reject(new Error(`S3 upload failed with status ${xhr.status}`));
         };
-
         xhr.onerror = () => reject(new Error('Network error during S3 file upload'));
         xhr.send(file);
       });
@@ -1510,17 +2545,16 @@
           uploadedToCloud = true;
         } catch (cloudErr) {
           console.warn('Cloud upload failed, saving locally:', cloudErr);
-          setStatus('Cloud upload failed, saving locally…', false);
+          setStatus('Cloud upload unavailable, saving locally…', false);
         }
 
-        // Always save a local copy in IndexedDB
         const buf = await readAsArrayBuffer(selectedFile);
         const ext = selectedFile.name.split('.').pop().toLowerCase();
         await savePage(pageName, ab2b64(buf), ext);
 
         progressBar.style.width = '100%';
         setStatus(uploadedToCloud ? 'Published to cloud! Redirecting…' : 'Published locally! Redirecting…', false);
-        setTimeout(() => { closeModal(); navigateTo(pageName); }, 700);
+        setTimeout(() => { closeModal(); navigateTo('/' + pageName); }, 700);
       } catch (err) {
         console.error(err);
         setStatus('Error: ' + err.message, true);
@@ -1535,7 +2569,7 @@
       statusMsg.classList.toggle('error', isErr);
     }
 
-    // ── Viewer ────────────────────────────────────────────────────
+    // ── DOCUMENT VIEWER ENGINE (PDF / PPT) ─────────────────────────
     const viewerLoading = document.getElementById('viewerLoading');
     const notFoundMsg = document.getElementById('notFoundMsg');
     const pdfContainer = document.getElementById('pdfContainer');
@@ -1545,6 +2579,9 @@
     const viewerLoadingTitle = document.getElementById('viewerLoadingTitle');
     const viewerLoadingSubtitle = document.getElementById('viewerLoadingSubtitle');
 
+    document.getElementById('goHomeLink').addEventListener('click', () => navigateTo('/'));
+    document.getElementById('viewerLogoLink').addEventListener('click', () => navigateTo('/'));
+
     function setViewerLoading(title, subtitle) {
       viewerLoadingTitle.textContent = title;
       viewerLoadingSubtitle.textContent = subtitle;
@@ -1552,7 +2589,7 @@
     }
 
     async function loadPage(pageName) {
-      showViewer();
+      showDocumentViewer();
       document.title = pageName + ' — DONTCBOARD';
       updateCanonical('/' + encodeURIComponent(pageName));
 
@@ -1563,20 +2600,20 @@
       pdfPages.innerHTML = '';
       pptPages.innerHTML = '';
 
-      // 1. Try Cloud Backend first
-      let data = await fetchPageFromCloud(pageName);
+      let data = null;
+      try {
+        const res = await fetch(`/api/page?name=${encodeURIComponent(pageName)}`);
+        if (res.ok) {
+          const json = await res.json();
+          if (json && json.exists) data = json;
+        }
+      } catch (e) {}
 
-      // 2. Fallback to local IndexedDB if not found on cloud
       if (!data) {
         try {
           const localItem = await getPage(pageName);
           if (localItem) {
-            data = {
-              exists: true,
-              fileType: localItem.fileType,
-              fileData: localItem.fileData,
-              isLocal: true
-            };
+            data = { exists: true, fileType: localItem.fileType, fileData: localItem.fileData, isLocal: true };
           }
         } catch (e) {}
       }
@@ -1591,7 +2628,6 @@
         return;
       }
 
-      // Block copy/print shortcuts globally while viewer is open
       document.addEventListener('keydown', blockShortcuts, true);
       document.addEventListener('contextmenu', blockContext, true);
 
@@ -1640,7 +2676,7 @@
     }
 
     async function renderPPT(source, ext) {
-      setViewerLoading('Opening your presentation', 'Loading the first slide');
+      setViewerLoading('Opening presentation', 'Loading slide viewer');
       pptContainer.style.display = 'flex';
       pptPages.innerHTML = '';
 
@@ -1660,7 +2696,6 @@
       wrap.className = 'ppt-iframe-wrap';
 
       const iframe = document.createElement('iframe');
-      // If hosted online, use Microsoft Office Online Viewer or Google Viewer for full slide presentation
       if (rawUrl.startsWith('http://') || rawUrl.startsWith('https://')) {
         iframe.src = 'https://view.officeapps.live.com/op/embed.aspx?src=' + encodeURIComponent(rawUrl);
         iframe.onerror = () => {
@@ -1689,17 +2724,738 @@
     }
     function blockContext(e) { e.preventDefault(); }
 
-    // ── Utils ─────────────────────────────────────────────────────
+
+    // =========================================================================
+    // ── LIVE SCREEN SHARE: WEBRTC ENGINE & CONTROLLERS ───────────────────────
+    // =========================================================================
+
+    const ICE_SERVERS = {
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun2.l.google.com:19302' }
+      ]
+    };
+
+    // ── 1. HOST CONTROLLER STATE ──────────────────────────────────────────────
+    const hostState = {
+      roomId: null,
+      hostPeerId: null,
+      hostToken: null,
+      mediaStream: null,
+      peerConnections: new Map(), // viewerPeerId -> RTCPeerConnection
+      pollingInterval: null,
+      heartbeatInterval: null,
+      lastSignalTime: 0,
+      chatMessages: []
+    };
+
+    // UI elements (Host)
+    const hostLiveBadge = document.getElementById('hostLiveBadge');
+    const hostLiveBadgeText = document.getElementById('hostLiveBadgeText');
+    const hostRoomCodeDisplay = document.getElementById('hostRoomCodeDisplay');
+    const hostViewerCountText = document.getElementById('hostViewerCountText');
+    const hostAudioBadge = document.getElementById('hostAudioBadge');
+    const hostAudioIcon = document.getElementById('hostAudioIcon');
+    const hostAudioText = document.getElementById('hostAudioText');
+    const hostVideoPreview = document.getElementById('hostVideoPreview');
+    const hostVideoPlaceholder = document.getElementById('hostVideoPlaceholder');
+    const hostStageOverlay = document.getElementById('hostStageOverlay');
+    const hostShareLinkInput = document.getElementById('hostShareLinkInput');
+    const hostBtnStartCapture = document.getElementById('hostBtnStartCapture');
+    const hostBtnStartCapturePlaceholder = document.getElementById('hostBtnStartCapturePlaceholder');
+    const hostBtnStopCapture = document.getElementById('hostBtnStopCapture');
+    const hostStreamStatusText = document.getElementById('hostStreamStatusText');
+    const hostChatMessages = document.getElementById('hostChatMessages');
+    const hostChatInput = document.getElementById('hostChatInput');
+    const hostBtnSendChat = document.getElementById('hostBtnSendChat');
+
+    // Live share hub event listeners
+    document.getElementById('startLiveShareCard').addEventListener('click', (e) => {
+      if (e.target !== document.getElementById('btnStartLiveShare')) {
+        startLiveShareSession();
+      }
+    });
+    document.getElementById('btnStartLiveShare').addEventListener('click', startLiveShareSession);
+    document.getElementById('btnJoinLiveShare').addEventListener('click', () => {
+      const code = document.getElementById('joinRoomCodeInput').value.trim();
+      if (!code) {
+        showToast('Please enter a 6-digit room code');
+        document.getElementById('joinRoomCodeInput').focus();
+        return;
+      }
+      const rId = code.toUpperCase().startsWith('EW-') ? code.toUpperCase() : `EW-${code}`;
+      navigateTo(`/live/${rId}`);
+    });
+    document.getElementById('joinRoomCodeInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('btnJoinLiveShare').click();
+    });
+
+    // Start Live Share Room (Host)
+    async function startLiveShareSession() {
+      try {
+        showToast('Creating secure Live Share room…');
+        const res = await fetch('/api/live?action=create-room', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            roomName: 'Live Screen Share',
+            hasAudio: true
+          })
+        });
+
+        if (!res.ok) throw new Error('Failed to create room on signaling server');
+        const data = await res.json();
+
+        hostState.roomId = data.roomId;
+        hostState.hostPeerId = data.hostPeerId;
+        hostState.hostToken = data.hostToken;
+        hostState.lastSignalTime = Date.now();
+        hostState.peerConnections.clear();
+        hostState.chatMessages = [];
+
+        // Update UI
+        hostRoomCodeDisplay.textContent = hostState.roomId;
+        const shareUrl = `${location.origin}/live/${hostState.roomId}`;
+        hostShareLinkInput.value = shareUrl;
+
+        hostLiveBadgeText.textContent = 'READY TO SHARE';
+        hostLiveBadge.style.background = 'rgba(255,255,255,0.08)';
+        hostViewerCountText.textContent = '0 Viewers';
+        hostChatMessages.innerHTML = '<div class="chat-empty">No messages yet. Viewers can send questions and comments here.</div>';
+
+        showHostDashboard();
+        document.title = `Host Session (${hostState.roomId}) – DONTCBOARD`;
+        showToast(`Live Room ${hostState.roomId} created!`);
+
+        // Start Host polling loop & heartbeat
+        startHostPolling();
+      } catch (err) {
+        console.error('Error starting live share session:', err);
+        showToast('Error creating room: ' + err.message);
+      }
+    }
+
+    // Host Screen Capture
+    async function startHostScreenCapture() {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+        alert('Your browser does not support native screen capture. Please use Chrome, Edge, Safari 13+, or Firefox on desktop.');
+        return;
+      }
+
+      try {
+        hostStreamStatusText.textContent = 'Requesting browser screen capture…';
+
+        // Request display media
+        const stream = await navigator.mediaDevices.getDisplayMedia({
+          video: {
+            cursor: 'always',
+            displaySurface: 'monitor'
+          },
+          audio: true
+        });
+
+        hostState.mediaStream = stream;
+
+        // Attach to preview video
+        hostVideoPreview.srcObject = stream;
+        hostVideoPreview.style.display = 'block';
+        hostVideoPlaceholder.style.display = 'none';
+        hostStageOverlay.style.display = 'flex';
+
+        // Update buttons
+        hostBtnStartCapture.style.display = 'none';
+        hostBtnStopCapture.style.display = 'inline-flex';
+        hostLiveBadgeText.textContent = '🔴 LIVE BROADCAST';
+        hostLiveBadge.style.background = 'rgba(239, 68, 68, 0.15)';
+        hostStreamStatusText.textContent = 'Live stream active';
+
+        // Check audio track
+        const audioTracks = stream.getAudioTracks();
+        if (audioTracks.length > 0) {
+          hostAudioIcon.textContent = '🎤';
+          hostAudioText.textContent = 'Audio sharing active';
+          hostAudioBadge.style.borderColor = 'var(--live-green)';
+        } else {
+          hostAudioIcon.textContent = '🔇';
+          hostAudioText.textContent = 'Video only';
+          hostAudioBadge.style.borderColor = 'var(--border)';
+        }
+
+        // Handle native "Stop Sharing" button click from Chrome floating bar
+        const videoTrack = stream.getVideoTracks()[0];
+        if (videoTrack) {
+          videoTrack.onended = () => {
+            stopHostScreenCapture();
+            showToast('Screen sharing stopped');
+          };
+        }
+
+        // Add tracks to any already-connected viewer peer connections
+        for (const [viewerPeerId, pc] of hostState.peerConnections.entries()) {
+          stream.getTracks().forEach(track => {
+            pc.addTrack(track, stream);
+          });
+          // Re-negotiate offer
+          renegotiateHostPeer(viewerPeerId, pc);
+        }
+
+        showToast('Screen sharing started! You are live.');
+      } catch (err) {
+        console.warn('Screen capture cancelled or denied:', err);
+        hostStreamStatusText.textContent = 'Screen capture cancelled';
+        if (err.name === 'NotAllowedError') {
+          showToast('Screen sharing permission was denied. Please allow and try again.');
+        } else {
+          showToast('Could not start screen sharing: ' + err.message);
+        }
+      }
+    }
+
+    function stopHostScreenCapture() {
+      if (hostState.mediaStream) {
+        hostState.mediaStream.getTracks().forEach(track => track.stop());
+        hostState.mediaStream = null;
+      }
+
+      hostVideoPreview.srcObject = null;
+      hostVideoPreview.style.display = 'none';
+      hostVideoPlaceholder.style.display = 'flex';
+      hostStageOverlay.style.display = 'none';
+
+      hostBtnStartCapture.style.display = 'inline-flex';
+      hostBtnStopCapture.style.display = 'none';
+      hostLiveBadgeText.textContent = 'PAUSED';
+      hostStreamStatusText.textContent = 'Sharing stopped';
+      hostAudioIcon.textContent = '🔇';
+      hostAudioText.textContent = 'Audio unavailable';
+    }
+
+    async function endHostSession() {
+      if (!confirm('Are you sure you want to end this live session? All viewers will be disconnected.')) {
+        return;
+      }
+
+      stopHostScreenCapture();
+
+      // Notify signaling server
+      try {
+        await fetch('/api/live?action=end-room', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            roomId: hostState.roomId,
+            hostToken: hostState.hostToken
+          })
+        });
+      } catch (e) {}
+
+      // Close all peer connections
+      for (const pc of hostState.peerConnections.values()) {
+        try { pc.close(); } catch (e) {}
+      }
+      hostState.peerConnections.clear();
+
+      if (hostState.pollingInterval) clearInterval(hostState.pollingInterval);
+      if (hostState.heartbeatInterval) clearInterval(hostState.heartbeatInterval);
+
+      showToast('Live session ended.');
+      navigateTo('/live');
+    }
+
+    // Host Signaling loop
+    function startHostPolling() {
+      if (hostState.pollingInterval) clearInterval(hostState.pollingInterval);
+
+      hostState.pollingInterval = setInterval(async () => {
+        if (!hostState.roomId) return;
+
+        try {
+          const res = await fetch(`/api/live?action=poll&roomId=${encodeURIComponent(hostState.roomId)}&peerId=${encodeURIComponent(hostState.hostPeerId)}&since=${hostState.lastSignalTime}`);
+          if (!res.ok) return;
+          const data = await res.json();
+
+          if (data.viewerCount !== undefined) {
+            hostViewerCountText.textContent = `${data.viewerCount} Viewer${data.viewerCount === 1 ? '' : 's'}`;
+          }
+
+          if (data.timestamp) hostState.lastSignalTime = data.timestamp;
+
+          if (data.signals && data.signals.length > 0) {
+            for (const sig of data.signals) {
+              handleHostSignal(sig);
+            }
+          }
+        } catch (e) {
+          console.warn('Host signaling poll error:', e);
+        }
+      }, 850);
+    }
+
+    async function handleHostSignal(sig) {
+      const { fromPeerId, type, data } = sig;
+
+      // 1. Viewer Joined -> Host creates Peer Connection & creates Offer
+      if (type === 'join') {
+        createHostPeerConnection(fromPeerId);
+        showToast(`A viewer joined!`);
+        return;
+      }
+
+      // 2. Viewer Answer
+      if (type === 'answer') {
+        const pc = hostState.peerConnections.get(fromPeerId);
+        if (pc) {
+          await pc.setRemoteDescription(new RTCSessionDescription(data));
+        }
+        return;
+      }
+
+      // 3. ICE Candidate from Viewer
+      if (type === 'ice-candidate') {
+        const pc = hostState.peerConnections.get(fromPeerId);
+        if (pc && data) {
+          try {
+            await pc.addIceCandidate(new RTCIceCandidate(data));
+          } catch (e) {
+            console.warn('Error adding ICE candidate from viewer:', e);
+          }
+        }
+        return;
+      }
+
+      // 4. Viewer Left
+      if (type === 'leave') {
+        const pc = hostState.peerConnections.get(fromPeerId);
+        if (pc) {
+          pc.close();
+          hostState.peerConnections.delete(fromPeerId);
+        }
+        return;
+      }
+
+      // 5. Chat message from Viewer
+      if (type === 'chat') {
+        appendHostChat(data.sender || 'Viewer', data.message);
+        return;
+      }
+    }
+
+    async function createHostPeerConnection(viewerPeerId) {
+      if (hostState.peerConnections.has(viewerPeerId)) {
+        try { hostState.peerConnections.get(viewerPeerId).close(); } catch (e) {}
+      }
+
+      const pc = new RTCPeerConnection(ICE_SERVERS);
+      hostState.peerConnections.set(viewerPeerId, pc);
+
+      // Add local stream tracks if screen sharing is active
+      if (hostState.mediaStream) {
+        hostState.mediaStream.getTracks().forEach(track => {
+          pc.addTrack(track, hostState.mediaStream);
+        });
+      }
+
+      // Send ICE candidates to viewer
+      pc.onicecandidate = (event) => {
+        if (event.candidate) {
+          sendSignalToPeer(viewerPeerId, 'ice-candidate', event.candidate);
+        }
+      };
+
+      pc.onconnectionstatechange = () => {
+        if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed' || pc.connectionState === 'closed') {
+          hostState.peerConnections.delete(viewerPeerId);
+        }
+      };
+
+      // Create WebRTC Offer
+      try {
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        sendSignalToPeer(viewerPeerId, 'offer', offer);
+      } catch (err) {
+        console.error('Error creating offer for viewer:', err);
+      }
+    }
+
+    async function renegotiateHostPeer(viewerPeerId, pc) {
+      try {
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        sendSignalToPeer(viewerPeerId, 'offer', offer);
+      } catch (err) {
+        console.error('Error renegotiating offer for viewer:', err);
+      }
+    }
+
+    async function sendSignalToPeer(toPeerId, type, data) {
+      try {
+        await fetch('/api/live?action=signal', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            roomId: hostState.roomId,
+            fromPeerId: hostState.hostPeerId,
+            toPeerId,
+            type,
+            data
+          })
+        });
+      } catch (e) {}
+    }
+
+    function appendHostChat(sender, message) {
+      const empty = hostChatMessages.querySelector('.chat-empty');
+      if (empty) empty.remove();
+
+      const item = document.createElement('div');
+      item.className = 'chat-msg-item';
+      item.innerHTML = `<div class="chat-msg-sender">${escapeHTML(sender)}</div><div>${escapeHTML(message)}</div>`;
+      hostChatMessages.appendChild(item);
+      hostChatMessages.scrollTop = hostChatMessages.scrollHeight;
+
+      const count = hostChatMessages.querySelectorAll('.chat-msg-item').length;
+      document.getElementById('hostChatCount').textContent = `${count} msg${count === 1 ? '' : 's'}`;
+    }
+
+    function sendHostChatMessage() {
+      const val = hostChatInput.value.trim();
+      if (!val) return;
+      hostChatInput.value = '';
+      appendHostChat('Host (You)', val);
+      sendSignalToPeer('all', 'chat', { sender: 'Host', message: val });
+    }
+
+    // Host button listeners
+    hostBtnStartCapture.addEventListener('click', startHostScreenCapture);
+    hostBtnStartCapturePlaceholder.addEventListener('click', startHostScreenCapture);
+    hostBtnStopCapture.addEventListener('click', stopHostScreenCapture);
+    document.getElementById('hostBtnEndSession').addEventListener('click', endHostSession);
+
+    document.getElementById('hostBtnCopyLink').addEventListener('click', () => {
+      copyToClipboard(hostShareLinkInput.value, 'Live share link copied!');
+    });
+    document.getElementById('hostBtnCopyLinkSide').addEventListener('click', () => {
+      copyToClipboard(hostShareLinkInput.value, 'Live share link copied!');
+    });
+    document.getElementById('hostBtnCopyCode').addEventListener('click', () => {
+      copyToClipboard(hostState.roomId, `Room Code ${hostState.roomId} copied!`);
+    });
+    document.getElementById('hostBtnShare').addEventListener('click', () => {
+      triggerShare('DONTCBOARD Live Share', `Watch my live screen share: ${hostShareLinkInput.value}`, hostShareLinkInput.value);
+    });
+    document.getElementById('hostBtnShareSide').addEventListener('click', () => {
+      triggerShare('DONTCBOARD Live Share', `Watch my live screen share: ${hostShareLinkInput.value}`, hostShareLinkInput.value);
+    });
+    document.getElementById('hostBtnFullscreenPreview').addEventListener('click', () => {
+      if (hostVideoPreview.requestFullscreen) hostVideoPreview.requestFullscreen();
+      else if (hostVideoPreview.webkitRequestFullscreen) hostVideoPreview.webkitRequestFullscreen();
+    });
+
+    hostBtnSendChat.addEventListener('click', sendHostChatMessage);
+    hostChatInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') sendHostChatMessage();
+    });
+
+
+    // ── 2. VIEWER CONTROLLER STATE ────────────────────────────────────────────
+    const viewerState = {
+      roomId: null,
+      viewerPeerId: null,
+      hostPeerId: null,
+      peerConnection: null,
+      pollingInterval: null,
+      lastSignalTime: 0,
+      isMuted: false
+    };
+
+    // UI elements (Viewer)
+    const viewerStreamVideo = document.getElementById('viewerStreamVideo');
+    const viewerLoadingOverlay = document.getElementById('viewerLoadingOverlay');
+    const viewerEndedOverlay = document.getElementById('viewerEndedOverlay');
+    const viewerLoadingTitle = document.getElementById('viewerLoadingTitle');
+    const viewerLoadingSubtitle = document.getElementById('viewerLoadingSubtitle');
+    const viewerEndedReason = document.getElementById('viewerEndedReason');
+    const viewerRoomCodeDisplay = document.getElementById('viewerRoomCodeDisplay');
+    const viewerLiveBadgeText = document.getElementById('viewerLiveBadgeText');
+    const viewerConnectionState = document.getElementById('viewerConnectionState');
+    const viewerAudioIcon = document.getElementById('viewerAudioIcon');
+    const viewerAudioText = document.getElementById('viewerAudioText');
+    const viewerChatMessages = document.getElementById('viewerChatMessages');
+    const viewerChatInput = document.getElementById('viewerChatInput');
+    const viewerBtnSendChat = document.getElementById('viewerBtnSendChat');
+
+    document.getElementById('viewerNavBrand').addEventListener('click', () => leaveViewerSession('/'));
+    document.getElementById('viewerBtnLeave').addEventListener('click', () => leaveViewerSession('/live'));
+    document.getElementById('viewerBtnReturnHome').addEventListener('click', () => leaveViewerSession('/'));
+    document.getElementById('viewerBtnStartOwnLive').addEventListener('click', () => leaveViewerSession('/live'));
+
+    document.getElementById('viewerBtnFullscreen').addEventListener('click', () => {
+      const container = document.getElementById('viewerVideoContainer');
+      if (document.fullscreenElement) {
+        if (document.exitFullscreen) document.exitFullscreen();
+      } else {
+        if (container.requestFullscreen) container.requestFullscreen();
+        else if (container.webkitRequestFullscreen) container.webkitRequestFullscreen();
+      }
+    });
+
+    document.getElementById('viewerBtnAudioToggle').addEventListener('click', () => {
+      viewerState.isMuted = !viewerState.isMuted;
+      viewerStreamVideo.muted = viewerState.isMuted;
+      if (viewerState.isMuted) {
+        viewerAudioIcon.textContent = '🔇';
+        viewerAudioText.textContent = 'Unmute Audio';
+        showToast('Audio muted');
+      } else {
+        viewerAudioIcon.textContent = '🔊';
+        viewerAudioText.textContent = 'Mute Audio';
+        showToast('Audio unmuted');
+      }
+    });
+
+    async function joinLiveSessionAsViewer(roomId) {
+      showLiveViewer();
+      viewerRoomCodeDisplay.textContent = roomId;
+      document.title = `Watch Live Screen (${roomId}) – DONTCBOARD`;
+      updateCanonical(`/live/${roomId}`);
+
+      viewerLoadingOverlay.style.display = 'flex';
+      viewerEndedOverlay.style.display = 'none';
+      viewerLoadingTitle.textContent = 'Connecting to Live Room';
+      viewerLoadingSubtitle.textContent = `Looking up room ${roomId}…`;
+      viewerChatMessages.innerHTML = '<div class="chat-empty">No messages yet. Send a note above to say hello!</div>';
+
+      // 1. Verify Room Exists & is Active
+      try {
+        const res = await fetch(`/api/live?action=get-room&roomId=${encodeURIComponent(roomId)}`);
+        if (!res.ok) throw new Error('Signaling server unavailable');
+        const roomData = await res.json();
+
+        if (!roomData || !roomData.exists || !roomData.active) {
+          viewerLoadingOverlay.style.display = 'none';
+          viewerEndedOverlay.style.display = 'flex';
+          viewerEndedReason.textContent = 'This live room does not exist or has already ended.';
+          return;
+        }
+
+        viewerState.roomId = roomId;
+        viewerState.viewerPeerId = `viewer_${Math.random().toString(36).substr(2, 9)}`;
+        viewerState.hostPeerId = roomData.hostPeerId;
+        viewerState.lastSignalTime = Date.now();
+
+        viewerLoadingSubtitle.textContent = 'Waiting for host stream broadcast…';
+
+        // 2. Setup RTCPeerConnection for Viewer
+        setupViewerPeerConnection();
+
+        // 3. Send JOIN signal to Host
+        await sendViewerSignal('join', {});
+
+        // 4. Start Viewer polling loop
+        startViewerPolling();
+      } catch (err) {
+        console.error('Error joining live session:', err);
+        viewerLoadingOverlay.style.display = 'none';
+        viewerEndedOverlay.style.display = 'flex';
+        viewerEndedReason.textContent = `Unable to connect: ${err.message}`;
+      }
+    }
+
+    function setupViewerPeerConnection() {
+      if (viewerState.peerConnection) {
+        try { viewerState.peerConnection.close(); } catch (e) {}
+      }
+
+      const pc = new RTCPeerConnection(ICE_SERVERS);
+      viewerState.peerConnection = pc;
+
+      // Handle receiving tracks from Host
+      pc.ontrack = (event) => {
+        viewerStreamVideo.srcObject = event.streams[0];
+        viewerLoadingOverlay.style.display = 'none';
+        viewerLiveBadgeText.textContent = '🔴 LIVE STREAM';
+        viewerConnectionState.textContent = 'WebRTC: Live';
+        showToast('Live stream connected!');
+      };
+
+      // Handle sending ICE candidates to Host
+      pc.onicecandidate = (event) => {
+        if (event.candidate) {
+          sendViewerSignal('ice-candidate', event.candidate);
+        }
+      };
+
+      pc.onconnectionstatechange = () => {
+        const state = pc.connectionState;
+        viewerConnectionState.textContent = `WebRTC: ${state}`;
+        if (state === 'connected') {
+          viewerLoadingOverlay.style.display = 'none';
+        } else if (state === 'disconnected' || state === 'failed') {
+          viewerConnectionState.textContent = 'WebRTC: Reconnecting';
+        }
+      };
+    }
+
+    function startViewerPolling() {
+      if (viewerState.pollingInterval) clearInterval(viewerState.pollingInterval);
+
+      viewerState.pollingInterval = setInterval(async () => {
+        if (!viewerState.roomId || !viewerState.viewerPeerId) return;
+
+        try {
+          const res = await fetch(`/api/live?action=poll&roomId=${encodeURIComponent(viewerState.roomId)}&peerId=${encodeURIComponent(viewerState.viewerPeerId)}&since=${viewerState.lastSignalTime}`);
+          if (!res.ok) return;
+          const data = await res.json();
+
+          if (data.timestamp) viewerState.lastSignalTime = data.timestamp;
+
+          if (!data.active) {
+            handleLiveSessionEnded('The host has ended this live session.');
+            return;
+          }
+
+          if (data.signals && data.signals.length > 0) {
+            for (const sig of data.signals) {
+              handleViewerSignal(sig);
+            }
+          }
+        } catch (e) {
+          console.warn('Viewer signaling poll error:', e);
+        }
+      }, 850);
+    }
+
+    async function handleViewerSignal(sig) {
+      const { type, data } = sig;
+      const pc = viewerState.peerConnection;
+
+      // 1. Offer received from Host
+      if (type === 'offer') {
+        if (!pc) return;
+        try {
+          await pc.setRemoteDescription(new RTCSessionDescription(data));
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
+          await sendViewerSignal('answer', answer);
+        } catch (err) {
+          console.error('Error handling offer from host:', err);
+        }
+        return;
+      }
+
+      // 2. ICE Candidate from Host
+      if (type === 'ice-candidate') {
+        if (pc && data) {
+          try {
+            await pc.addIceCandidate(new RTCIceCandidate(data));
+          } catch (e) {
+            console.warn('Error adding ICE candidate on viewer:', e);
+          }
+        }
+        return;
+      }
+
+      // 3. Session Ended
+      if (type === 'end-session') {
+        handleLiveSessionEnded(data?.reason || 'The host has ended this live session.');
+        return;
+      }
+
+      // 4. Chat Message
+      if (type === 'chat') {
+        appendViewerChat(data.sender || 'Host', data.message);
+        return;
+      }
+    }
+
+    function handleLiveSessionEnded(reason) {
+      if (viewerState.pollingInterval) clearInterval(viewerState.pollingInterval);
+      if (viewerState.peerConnection) {
+        try { viewerState.peerConnection.close(); } catch (e) {}
+      }
+      viewerStreamVideo.srcObject = null;
+      viewerLoadingOverlay.style.display = 'none';
+      viewerEndedOverlay.style.display = 'flex';
+      viewerEndedReason.textContent = reason;
+      viewerLiveBadgeText.textContent = 'SESSION ENDED';
+      viewerConnectionState.textContent = 'WebRTC: Closed';
+    }
+
+    async function sendViewerSignal(type, data) {
+      try {
+        await fetch('/api/live?action=signal', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            roomId: viewerState.roomId,
+            fromPeerId: viewerState.viewerPeerId,
+            toPeerId: viewerState.hostPeerId || 'all',
+            type,
+            data
+          })
+        });
+      } catch (e) {}
+    }
+
+    function appendViewerChat(sender, message) {
+      const empty = viewerChatMessages.querySelector('.chat-empty');
+      if (empty) empty.remove();
+
+      const item = document.createElement('div');
+      item.className = 'chat-msg-item';
+      item.innerHTML = `<div class="chat-msg-sender">${escapeHTML(sender)}</div><div>${escapeHTML(message)}</div>`;
+      viewerChatMessages.appendChild(item);
+      viewerChatMessages.scrollTop = viewerChatMessages.scrollHeight;
+    }
+
+    function sendViewerChatMessage() {
+      const val = viewerChatInput.value.trim();
+      if (!val) return;
+      viewerChatInput.value = '';
+      appendViewerChat('You', val);
+      sendViewerSignal('chat', { sender: 'Viewer', message: val });
+    }
+
+    viewerBtnSendChat.addEventListener('click', sendViewerChatMessage);
+    viewerChatInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') sendViewerChatMessage();
+    });
+
+    function leaveViewerSession(targetPath = '/live') {
+      if (viewerState.pollingInterval) clearInterval(viewerState.pollingInterval);
+      sendViewerSignal('leave', {});
+      if (viewerState.peerConnection) {
+        try { viewerState.peerConnection.close(); } catch (e) {}
+      }
+      viewerStreamVideo.srcObject = null;
+      navigateTo(targetPath);
+    }
+
+    // ── UTILITIES ────────────────────────────────────────────────
     function slugify(s) {
-      return s.toLowerCase().trim()
+      return (s || '').toLowerCase().trim()
         .replace(/[^a-z0-9\-]/g, '-')
         .replace(/-+/g, '-').replace(/^-|-$/g, '');
     }
+
+    function escapeHTML(str) {
+      return (str || '').replace(/[&<>'"]/g, tag => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        "'": '&#39;',
+        '"': '&quot;'
+      }[tag] || tag));
+    }
+
     function fmtBytes(b) {
       if (b < 1024) return b + ' B';
       if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
       return (b / 1048576).toFixed(1) + ' MB';
     }
+
     function readAsArrayBuffer(file, onProgress) {
       return new Promise((res, rej) => {
         const r = new FileReader();
@@ -1709,12 +3465,14 @@
         r.readAsArrayBuffer(file);
       });
     }
+
     function ab2b64(buf) {
       let bin = '', bytes = new Uint8Array(buf), chunk = 8192;
       for (let i = 0; i < bytes.byteLength; i += chunk)
         bin += String.fromCharCode(...bytes.subarray(i, i + chunk));
       return btoa(bin);
     }
+
     function b642ab(b64) {
       const bin = atob(b64), bytes = new Uint8Array(bin.length);
       for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
