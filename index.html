@@ -53,6 +53,9 @@
       --icon-bg: #ffffff;
       --icon-border: #111111;
       --icon-stroke: #111111;
+      --ambient-a: rgba(17, 17, 17, 0.08);
+      --ambient-b: rgba(17, 17, 17, 0.035);
+      --ambient-glow: rgba(255, 255, 255, 0.82);
     }
 
     /* ── Dark mode ── */
@@ -82,6 +85,9 @@
       --icon-bg: #111111;
       --icon-border: #333333;
       --icon-stroke: #ffffff;
+      --ambient-a: rgba(255, 255, 255, 0.1);
+      --ambient-b: rgba(255, 255, 255, 0.035);
+      --ambient-glow: rgba(10, 10, 10, 0.78);
     }
 
     html,
@@ -116,6 +122,7 @@
       padding: 104px 20px 40px;
       position: relative;
       overflow: hidden;
+      isolation: isolate;
     }
 
     #homeScreen::before {
@@ -127,6 +134,19 @@
         linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
       background-size: 48px 48px;
       pointer-events: none;
+      opacity: 0.9;
+    }
+
+    #homeScreen::after {
+      content: '';
+      position: absolute;
+      inset: -20%;
+      z-index: -1;
+      background:
+        radial-gradient(circle at 50% 38%, var(--ambient-glow) 0 16%, transparent 48%),
+        radial-gradient(circle at 15% 80%, var(--ambient-b), transparent 32%),
+        radial-gradient(circle at 86% 18%, var(--ambient-b), transparent 30%);
+      pointer-events: none;
     }
 
     .ambient-motion {
@@ -135,20 +155,24 @@
       z-index: 0;
       overflow: hidden;
       pointer-events: none;
+      mask-image: linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent);
     }
 
     .ambient-tile {
       position: absolute;
-      width: 48px;
-      height: 48px;
-      border-radius: 10px;
-      background: #000;
-      opacity: 0.075;
-      animation: ambient-hop 16s ease-in-out infinite;
+      width: 56px;
+      height: 56px;
+      border: 1px solid var(--ambient-a);
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--ambient-a), transparent 68%);
+      box-shadow: inset 0 0 0 1px var(--ambient-b), 0 18px 44px var(--ambient-b);
+      opacity: 0.7;
+      transform: rotate(18deg);
+      animation: ambient-drift 18s ease-in-out infinite;
     }
 
     html.dark .ambient-tile {
-      background: #fff;
+      background: linear-gradient(135deg, var(--ambient-a), transparent 68%);
     }
 
     .ambient-tile:nth-child(1) {
@@ -173,6 +197,65 @@
       top: 76%;
       right: 25%;
       animation-delay: -14s;
+    }
+
+    .ambient-tile:nth-child(2) {
+      width: 32px;
+      height: 32px;
+      border-radius: 9px;
+      animation-duration: 14s;
+    }
+
+    .ambient-tile:nth-child(3) {
+      width: 76px;
+      height: 76px;
+      border-radius: 20px;
+      animation-duration: 22s;
+    }
+
+    .ambient-tile:nth-child(4) {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      animation-duration: 15s;
+    }
+
+    .ambient-tile:nth-child(5) {
+      top: 45%;
+      left: 42%;
+      width: 24px;
+      height: 24px;
+      border-radius: 7px;
+      animation-delay: -5s;
+      animation-duration: 12s;
+    }
+
+    .ambient-tile:nth-child(6) {
+      top: 12%;
+      left: 67%;
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      animation-delay: -9s;
+      animation-duration: 19s;
+    }
+
+    @keyframes ambient-drift {
+      0%, 100% {
+        transform: translate3d(0, 0, 0) rotate(18deg);
+      }
+      35% {
+        transform: translate3d(34px, -24px, 0) rotate(42deg);
+      }
+      70% {
+        transform: translate3d(-22px, 28px, 0) rotate(4deg);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .ambient-tile {
+        animation: none;
+      }
     }
 
     .home-topbar {
@@ -1098,6 +1181,8 @@
   <!-- HOME -->
   <div id="homeScreen">
     <div class="ambient-motion" aria-hidden="true">
+      <span class="ambient-tile"></span>
+      <span class="ambient-tile"></span>
       <span class="ambient-tile"></span>
       <span class="ambient-tile"></span>
       <span class="ambient-tile"></span>
