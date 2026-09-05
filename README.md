@@ -1,8 +1,8 @@
-# EasyWritedown
+# DONTCBOARD
 
 > Publish PDFs and PowerPoint files to a memorable page name and share them through a clean, browser-based viewer.
 
-EasyWritedown is a small full-stack document publishing application built around an AWS serverless storage pattern. The browser handles the user experience, the API creates short-lived signed URLs, Amazon S3 stores document bytes, and Amazon DynamoDB stores the lookup metadata needed to find each document.
+DONTCBOARD is a small full-stack document publishing application built around an AWS serverless storage pattern. The browser handles the user experience, the API creates short-lived signed URLs, Amazon S3 stores document bytes, and Amazon DynamoDB stores the lookup metadata needed to find each document.
 
 This project is also a practical first AWS cloud integration: it keeps the infrastructure understandable while using the same design principles used by larger cloud applications: least-privilege access, direct-to-object-storage uploads, durable metadata, and stateless API endpoints.
 
@@ -89,7 +89,7 @@ No sort key is required for the current one-document-per-page model. Publishing 
 
 ### 1. Create the S3 bucket
 
-Create a private S3 bucket in the region you plan to use. Keep **Block all public access** enabled. EasyWritedown uses presigned URLs, so the bucket does not need to be public.
+Create a private S3 bucket in the region you plan to use. Keep **Block all public access** enabled. DONTCBOARD uses presigned URLs, so the bucket does not need to be public.
 
 Use a globally unique bucket name, for example:
 
@@ -102,7 +102,7 @@ Add CORS so the browser can make the presigned `PUT` request. Replace the origin
 ```json
 [
   {
-    "AllowedOrigins": ["http://localhost:3000", "https://your-domain.example"],
+    "AllowedOrigins": ["http://localhost:3000", "https://dontcboard.me"],
     "AllowedMethods": ["PUT", "GET", "HEAD"],
     "AllowedHeaders": ["Content-Type"],
     "ExposeHeaders": ["ETag"],
@@ -192,6 +192,7 @@ The local server serves `index.html` and forwards `/api/page` and `/api/upload-r
 
 1. Import this repository into Vercel.
 2. Add the following Project Environment Variables:
+    - `SITE_URL=https://dontcboard.me`
    - `AWS_REGION`
    - `S3_BUCKET`
    - `DYNAMODB_TABLE`
@@ -200,6 +201,12 @@ The local server serves `index.html` and forwards `/api/page` and `/api/upload-r
 3. Deploy the project.
 4. Add the deployed Vercel origin to the S3 bucket CORS `AllowedOrigins` list.
 5. Upload a small PDF and verify that its page opens in a new browser session.
+
+After deployment, verify `https://dontcboard.me/robots.txt` and
+`https://dontcboard.me/sitemap.xml` in a browser. In Google Search Console,
+add the site property and submit `sitemap.xml`. The sitemap currently lists the
+homepage, while document pages are created dynamically and are not enumerated
+until a public page directory exists.
 
 `vercel.json` routes API requests to the files in `api/` and rewrites document paths back to the frontend so a page such as `/quarterly-report` can load directly.
 

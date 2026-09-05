@@ -1,8 +1,8 @@
 {
-  "name": "easywritedown",
+  "name": "dontcboard",
   "version": "1.0.0",
   "private": true,
-  "description": "EasyWritedown - Cloud Document Sharing",
+  "description": "DONTCBOARD - Cloud Document Sharing",
   "scripts": {
     "dev": "node server.js"
   },

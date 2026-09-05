@@ -5,6 +5,9 @@ const url = require('url');
 
 const pageHandler = require('./api/page');
 const uploadRequestHandler = require('./api/upload-request');
+const sitemapHandler = require('./api/sitemap');
+const robotsHandler = require('./api/robots');
+const liveHandler = require('./api/live');
 
 const PORT = process.env.PORT || 3000;
 
@@ -38,6 +41,20 @@ const server = http.createServer((req, res) => {
   const pathname = parsedUrl.pathname;
 
   // Route API requests
+  if (pathname === '/api/live' || pathname === '/api/live/') {
+    req.query = parsedUrl.query;
+    if (req.method === 'POST' || req.method === 'PUT') {
+      let body = '';
+      req.on('data', chunk => { body += chunk; });
+      req.on('end', () => {
+        try { req.body = JSON.parse(body); } catch (e) { req.body = body; }
+        return liveHandler(req, res);
+      });
+      return;
+    }
+    return liveHandler(req, res);
+  }
+
   if (pathname === '/api/page' || pathname === '/api/page/') {
     req.query = parsedUrl.query;
     return pageHandler(req, res);
@@ -51,6 +68,14 @@ const server = http.createServer((req, res) => {
       return uploadRequestHandler(req, res);
     });
     return;
+  }
+
+  if (pathname === '/sitemap.xml') {
+    return sitemapHandler(req, res);
+  }
+
+  if (pathname === '/robots.txt') {
+    return robotsHandler(req, res);
   }
 
   // Serve static files
@@ -72,5 +97,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`EasyWritedown server running at http://localhost:${PORT}`);
+  console.log(`DONTCBOARD server running at http://localhost:${PORT}`);
 });
