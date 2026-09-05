@@ -5,6 +5,8 @@ const url = require('url');
 
 const pageHandler = require('./api/page');
 const uploadRequestHandler = require('./api/upload-request');
+const sitemapHandler = require('./api/sitemap');
+const robotsHandler = require('./api/robots');
 
 const PORT = process.env.PORT || 3000;
 
@@ -51,6 +53,14 @@ const server = http.createServer((req, res) => {
       return uploadRequestHandler(req, res);
     });
     return;
+  }
+
+  if (pathname === '/sitemap.xml') {
+    return sitemapHandler(req, res);
+  }
+
+  if (pathname === '/robots.txt') {
+    return robotsHandler(req, res);
   }
 
   // Serve static files

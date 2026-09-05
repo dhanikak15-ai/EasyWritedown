@@ -7,8 +7,14 @@
   <title>EasyWritedown – Share Documents Instantly</title>
   <meta name="description"
     content="EasyWrite lets you publish PDFs and PowerPoint files instantly on a named page. Simple, clean, and distraction-free." />
-  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex" />
-  <meta name="google" content="notranslate, nosnippet" />
+  <meta name="robots" content="index, follow" />
+  <meta name="google" content="notranslate" />
+  <link rel="canonical" href="/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="EasyWritedown – Share Documents Instantly" />
+  <meta property="og:description"
+    content="Publish PDFs and PowerPoint files instantly on a named, shareable page." />
+  <meta property="og:url" content="/" />
   <link rel="icon" type="image/png" href="icon.png" />
   <link rel="apple-touch-icon" href="icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -1343,11 +1349,23 @@
       homeScreen.style.display = 'flex';
       viewerScreen.style.display = 'none';
       document.title = 'EasyWritedown – Share Documents Instantly';
+      updateCanonical('/');
       document.removeEventListener('keydown', blockShortcuts, true);
     }
     function showViewer() {
       homeScreen.style.display = 'none';
       viewerScreen.style.display = 'flex';
+    }
+
+    function updateCanonical(pathname) {
+      const canonical = document.querySelector('link[rel="canonical"]');
+      if (canonical && location.protocol !== 'file:') {
+        canonical.href = new URL(pathname, location.origin).href;
+      }
+      const ogUrl = document.querySelector('meta[property="og:url"]');
+      if (ogUrl && location.protocol !== 'file:') {
+        ogUrl.content = new URL(pathname, location.origin).href;
+      }
     }
 
     function navigateTo(name) {
@@ -1609,6 +1627,7 @@
       showViewer();
       document.getElementById('viewerPageLabel').textContent = pageName;
       document.title = pageName + ' — EasyWritedown';
+      updateCanonical('/' + encodeURIComponent(pageName));
 
       setViewerLoading('Finding your document', 'Preparing your page');
       notFoundMsg.style.display = 'none';
