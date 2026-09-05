@@ -183,37 +183,6 @@
       animation-delay: -14s;
     }
 
-    .home-topbar {
-      position: absolute;
-      top: 22px;
-      left: 24px;
-      right: 24px;
-      z-index: 2;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .brand-status {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      margin-left: auto;
-      margin-right: 150px;
-      color: #3d8b5f;
-      font-size: 0.72rem;
-      font-weight: 500;
-    }
-
-    .brand-status::before {
-      content: '';
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: #3d8b5f;
-      box-shadow: 0 0 0 3px rgba(61, 139, 95, 0.14);
-    }
-
     .home-inner {
       position: relative;
       z-index: 1;
@@ -254,9 +223,12 @@
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 50px;
-      padding: 7px 14px;
+      min-width: 42px;
+      min-height: 42px;
+      padding: 9px;
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 7px;
       cursor: pointer;
       font-family: inherit;
@@ -266,6 +238,10 @@
       transition: background var(--transition), border-color var(--transition), color var(--transition), box-shadow var(--transition);
       user-select: none;
       box-shadow: var(--shadow);
+    }
+
+    .toggle-label {
+      display: none;
     }
 
     .theme-toggle:hover {
@@ -303,10 +279,6 @@
 
     html.dark .toggle-label::after {
       content: 'Light mode';
-    }
-
-    .logo-block h1 span {
-      color: var(--text-muted);
     }
 
     .logo-block p {
@@ -827,7 +799,11 @@
       box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
     }
 
-    .viewer-logo span {
+    #viewerScreen ~ .theme-toggle {
+      top: 12px;
+    }
+
+    .brand-c {
       color: var(--text-muted);
     }
 
@@ -1030,10 +1006,16 @@
         padding: 72px 16px 16px;
       }
 
-      .home-topbar {
-        top: 16px;
-        left: 16px;
-        right: 16px;
+      .theme-toggle {
+        top: 10px;
+        right: 14px;
+        min-width: 38px;
+        min-height: 38px;
+        padding: 8px;
+      }
+
+      #viewerScreen ~ .theme-toggle {
+        top: 14px;
       }
 
       .options-grid {
@@ -1062,15 +1044,11 @@
       <span class="ambient-tile"></span>
     </div>
 
-    <div class="home-topbar">
-      <div class="brand-status">Active</div>
-    </div>
-
     <div class="home-inner">
 
       <div class="logo-block">
         <img class="brand-mark" src="icon.png" alt="DONTCBOARD logo" />
-        <h1>DONTC<span>BOARD</span></h1>
+        <h1>DONT<span class="brand-c">C</span>BOARD</h1>
         <p>Publish documents instantly. Share with a page name.</p>
       </div>
 
@@ -1162,9 +1140,8 @@
     <div class="viewer-header">
       <div class="viewer-logo" id="viewerLogoLink">
         <img class="viewer-logo-mark" src="icon.png" alt="" />
-        <span>DONTC<span>BOARD</span></span>
+        <span>DONT<span class="brand-c">C</span>BOARD</span>
       </div>
-      <div class="viewer-page-name" id="viewerPageLabel"></div>
     </div>
 
     <div class="viewer-loading" id="viewerLoading">
@@ -1180,8 +1157,8 @@
       <h2>NO DATA FOUND</h2>
       <p id="notFoundSubtext">No document has been published at this page name.</p>
       <div style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 12px;">
-        <button class="btn btn-white" id="createPageBtn">&#x2B06; Upload File for This Page</button>
-        <button class="btn btn-outline" id="goHomeLink">&#x2190; Return to Homepage</button>
+        <button class="btn btn-white" id="createPageBtn">Upload File for This Page</button>
+        <button class="btn btn-outline" id="goHomeLink">Return to Homepage</button>
       </div>
     </div>
 
@@ -1627,7 +1604,6 @@
 
     async function loadPage(pageName) {
       showViewer();
-      document.getElementById('viewerPageLabel').textContent = pageName;
       document.title = pageName + ' — DONTCBOARD';
       updateCanonical('/' + encodeURIComponent(pageName));
 
