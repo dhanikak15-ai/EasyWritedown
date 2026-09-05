@@ -142,15 +142,11 @@
       align-items: center;
       justify-content: space-between;
       padding: 0 24px;
-      background: rgba(var(--bg), 0.85);
+      background: rgba(255, 255, 255, 0.88);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--border);
       transition: background var(--transition), border-color var(--transition);
-    }
-
-    html:not(.dark) .top-nav {
-      background: rgba(255, 255, 255, 0.88);
     }
 
     html.dark .top-nav {
@@ -1898,7 +1894,7 @@
     </div>
   </section>
 
-  <!-- 4. VIEWER SCREEN (/live/:roomId) -->
+  <!-- 4. LIVE VIEWER SCREEN (/live/:roomId) -->
   <section id="liveViewerScreen">
     <div class="live-viewer-header">
       <div class="viewer-header-left">
@@ -1929,8 +1925,8 @@
         <!-- Loading Overlay -->
         <div class="viewer-loading-overlay" id="viewerLoadingOverlay">
           <div class="spinner"></div>
-          <h3 id="viewerLoadingTitle">Connecting to Live Session</h3>
-          <p id="viewerLoadingSubtitle" style="font-size: 0.85rem; color: #aaaaaa; max-width: 320px;">
+          <h3 id="liveViewerLoadingTitle">Connecting to Live Session</h3>
+          <p id="liveViewerLoadingSubtitle" style="font-size: 0.85rem; color: #aaaaaa; max-width: 320px;">
             Establishing encrypted WebRTC connection with host…
           </p>
         </div>
@@ -2042,8 +2038,8 @@
     <div class="viewer-loading" id="viewerLoading">
       <img class="viewer-loading-logo" src="icon.png" alt="DONTCBOARD" />
       <div class="viewer-loading-copy">
-        <span class="viewer-loading-title" id="viewerLoadingTitle">Finding your document</span>
-        <span class="viewer-loading-subtitle" id="viewerLoadingSubtitle">Preparing your page</span>
+        <span class="viewer-loading-title" id="docViewerLoadingTitle">Finding your document</span>
+        <span class="viewer-loading-subtitle" id="docViewerLoadingSubtitle">Preparing your page</span>
       </div>
       <div class="viewer-loading-track" aria-hidden="true"></div>
     </div>
@@ -2268,7 +2264,7 @@
     function showLiveViewer() {
       hideAllScreens();
       liveViewerScreen.style.display = 'flex';
-      topNav.style.display = 'none'; // Viewer has its own dedicated header
+      topNav.style.display = 'none';
     }
 
     function showDocumentViewer() {
@@ -2307,7 +2303,6 @@
         rawPath = decodeURIComponent(location.pathname);
       }
 
-      // Check query string
       const search = location.search.replace(/^\?/, '').trim();
       if (search && !rawPath) {
         rawPath = search;
@@ -2329,12 +2324,10 @@
       if (rawPath === 'privacy') return { type: 'privacy' };
       if (rawPath === 'terms') return { type: 'terms' };
 
-      // Check if it's a room code directly entered e.g. /EW-482931
       if (/^EW-[A-Z0-9]{4,10}$/i.test(parts[parts.length - 1])) {
         return { type: 'live-viewer', roomId: parts[parts.length - 1].toUpperCase() };
       }
 
-      // Otherwise, it's a document page slug
       return { type: 'document', slug: slugify(parts[parts.length - 1]) };
     }
 
@@ -2576,15 +2569,15 @@
     const pdfPages = document.getElementById('pdfPages');
     const pptContainer = document.getElementById('pptContainer');
     const pptPages = document.getElementById('pptPages');
-    const viewerLoadingTitle = document.getElementById('viewerLoadingTitle');
-    const viewerLoadingSubtitle = document.getElementById('viewerLoadingSubtitle');
+    const docViewerLoadingTitle = document.getElementById('docViewerLoadingTitle');
+    const docViewerLoadingSubtitle = document.getElementById('docViewerLoadingSubtitle');
 
     document.getElementById('goHomeLink').addEventListener('click', () => navigateTo('/'));
     document.getElementById('viewerLogoLink').addEventListener('click', () => navigateTo('/'));
 
-    function setViewerLoading(title, subtitle) {
-      viewerLoadingTitle.textContent = title;
-      viewerLoadingSubtitle.textContent = subtitle;
+    function setDocViewerLoading(title, subtitle) {
+      docViewerLoadingTitle.textContent = title;
+      docViewerLoadingSubtitle.textContent = subtitle;
       viewerLoading.style.display = 'flex';
     }
 
@@ -2593,7 +2586,7 @@
       document.title = pageName + ' — DONTCBOARD';
       updateCanonical('/' + encodeURIComponent(pageName));
 
-      setViewerLoading('Finding your document', 'Preparing your page');
+      setDocViewerLoading('Finding your document', 'Preparing your page');
       notFoundMsg.style.display = 'none';
       pdfContainer.style.display = 'none';
       pptContainer.style.display = 'none';
@@ -2650,7 +2643,7 @@
       const pdfDoc = await pdfjsLib.getDocument(docInitParams).promise;
       const total = pdfDoc.numPages;
 
-      setViewerLoading('Opening your document', `Rendering ${total} page${total === 1 ? '' : 's'}`);
+      setDocViewerLoading('Opening your document', `Rendering ${total} page${total === 1 ? '' : 's'}`);
       pdfContainer.style.display = 'flex';
 
       const scale = window.innerWidth < 600 ? 1.0 : window.innerWidth < 900 ? 1.4 : 1.8;
@@ -2676,7 +2669,7 @@
     }
 
     async function renderPPT(source, ext) {
-      setViewerLoading('Opening presentation', 'Loading slide viewer');
+      setDocViewerLoading('Opening presentation', 'Loading slide viewer');
       pptContainer.style.display = 'flex';
       pptPages.innerHTML = '';
 
@@ -2743,7 +2736,7 @@
       hostPeerId: null,
       hostToken: null,
       mediaStream: null,
-      peerConnections: new Map(), // viewerPeerId -> RTCPeerConnection
+      peerConnections: new Map(),
       pollingInterval: null,
       heartbeatInterval: null,
       lastSignalTime: 0,
@@ -2846,7 +2839,6 @@
       try {
         hostStreamStatusText.textContent = 'Requesting browser screen capture…';
 
-        // Request display media
         const stream = await navigator.mediaDevices.getDisplayMedia({
           video: {
             cursor: 'always',
@@ -2857,20 +2849,17 @@
 
         hostState.mediaStream = stream;
 
-        // Attach to preview video
         hostVideoPreview.srcObject = stream;
         hostVideoPreview.style.display = 'block';
         hostVideoPlaceholder.style.display = 'none';
         hostStageOverlay.style.display = 'flex';
 
-        // Update buttons
         hostBtnStartCapture.style.display = 'none';
         hostBtnStopCapture.style.display = 'inline-flex';
         hostLiveBadgeText.textContent = '🔴 LIVE BROADCAST';
         hostLiveBadge.style.background = 'rgba(239, 68, 68, 0.15)';
         hostStreamStatusText.textContent = 'Live stream active';
 
-        // Check audio track
         const audioTracks = stream.getAudioTracks();
         if (audioTracks.length > 0) {
           hostAudioIcon.textContent = '🎤';
@@ -2882,7 +2871,6 @@
           hostAudioBadge.style.borderColor = 'var(--border)';
         }
 
-        // Handle native "Stop Sharing" button click from Chrome floating bar
         const videoTrack = stream.getVideoTracks()[0];
         if (videoTrack) {
           videoTrack.onended = () => {
@@ -2891,12 +2879,10 @@
           };
         }
 
-        // Add tracks to any already-connected viewer peer connections
         for (const [viewerPeerId, pc] of hostState.peerConnections.entries()) {
           stream.getTracks().forEach(track => {
             pc.addTrack(track, stream);
           });
-          // Re-negotiate offer
           renegotiateHostPeer(viewerPeerId, pc);
         }
 
@@ -2938,7 +2924,6 @@
 
       stopHostScreenCapture();
 
-      // Notify signaling server
       try {
         await fetch('/api/live?action=end-room', {
           method: 'POST',
@@ -2950,7 +2935,6 @@
         });
       } catch (e) {}
 
-      // Close all peer connections
       for (const pc of hostState.peerConnections.values()) {
         try { pc.close(); } catch (e) {}
       }
@@ -2963,7 +2947,6 @@
       navigateTo('/live');
     }
 
-    // Host Signaling loop
     function startHostPolling() {
       if (hostState.pollingInterval) clearInterval(hostState.pollingInterval);
 
@@ -2995,14 +2978,12 @@
     async function handleHostSignal(sig) {
       const { fromPeerId, type, data } = sig;
 
-      // 1. Viewer Joined -> Host creates Peer Connection & creates Offer
       if (type === 'join') {
         createHostPeerConnection(fromPeerId);
-        showToast(`A viewer joined!`);
+        showToast('A viewer joined!');
         return;
       }
 
-      // 2. Viewer Answer
       if (type === 'answer') {
         const pc = hostState.peerConnections.get(fromPeerId);
         if (pc) {
@@ -3011,7 +2992,6 @@
         return;
       }
 
-      // 3. ICE Candidate from Viewer
       if (type === 'ice-candidate') {
         const pc = hostState.peerConnections.get(fromPeerId);
         if (pc && data) {
@@ -3024,7 +3004,6 @@
         return;
       }
 
-      // 4. Viewer Left
       if (type === 'leave') {
         const pc = hostState.peerConnections.get(fromPeerId);
         if (pc) {
@@ -3034,7 +3013,6 @@
         return;
       }
 
-      // 5. Chat message from Viewer
       if (type === 'chat') {
         appendHostChat(data.sender || 'Viewer', data.message);
         return;
@@ -3049,14 +3027,12 @@
       const pc = new RTCPeerConnection(ICE_SERVERS);
       hostState.peerConnections.set(viewerPeerId, pc);
 
-      // Add local stream tracks if screen sharing is active
       if (hostState.mediaStream) {
         hostState.mediaStream.getTracks().forEach(track => {
           pc.addTrack(track, hostState.mediaStream);
         });
       }
 
-      // Send ICE candidates to viewer
       pc.onicecandidate = (event) => {
         if (event.candidate) {
           sendSignalToPeer(viewerPeerId, 'ice-candidate', event.candidate);
@@ -3069,7 +3045,6 @@
         }
       };
 
-      // Create WebRTC Offer
       try {
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
@@ -3174,8 +3149,8 @@
     const viewerStreamVideo = document.getElementById('viewerStreamVideo');
     const viewerLoadingOverlay = document.getElementById('viewerLoadingOverlay');
     const viewerEndedOverlay = document.getElementById('viewerEndedOverlay');
-    const viewerLoadingTitle = document.getElementById('viewerLoadingTitle');
-    const viewerLoadingSubtitle = document.getElementById('viewerLoadingSubtitle');
+    const liveViewerLoadingTitle = document.getElementById('liveViewerLoadingTitle');
+    const liveViewerLoadingSubtitle = document.getElementById('liveViewerLoadingSubtitle');
     const viewerEndedReason = document.getElementById('viewerEndedReason');
     const viewerRoomCodeDisplay = document.getElementById('viewerRoomCodeDisplay');
     const viewerLiveBadgeText = document.getElementById('viewerLiveBadgeText');
@@ -3223,11 +3198,10 @@
 
       viewerLoadingOverlay.style.display = 'flex';
       viewerEndedOverlay.style.display = 'none';
-      viewerLoadingTitle.textContent = 'Connecting to Live Room';
-      viewerLoadingSubtitle.textContent = `Looking up room ${roomId}…`;
+      liveViewerLoadingTitle.textContent = 'Connecting to Live Room';
+      liveViewerLoadingSubtitle.textContent = `Looking up room ${roomId}…`;
       viewerChatMessages.innerHTML = '<div class="chat-empty">No messages yet. Send a note above to say hello!</div>';
 
-      // 1. Verify Room Exists & is Active
       try {
         const res = await fetch(`/api/live?action=get-room&roomId=${encodeURIComponent(roomId)}`);
         if (!res.ok) throw new Error('Signaling server unavailable');
@@ -3245,15 +3219,10 @@
         viewerState.hostPeerId = roomData.hostPeerId;
         viewerState.lastSignalTime = Date.now();
 
-        viewerLoadingSubtitle.textContent = 'Waiting for host stream broadcast…';
+        liveViewerLoadingSubtitle.textContent = 'Waiting for host stream broadcast…';
 
-        // 2. Setup RTCPeerConnection for Viewer
         setupViewerPeerConnection();
-
-        // 3. Send JOIN signal to Host
         await sendViewerSignal('join', {});
-
-        // 4. Start Viewer polling loop
         startViewerPolling();
       } catch (err) {
         console.error('Error joining live session:', err);
@@ -3271,7 +3240,6 @@
       const pc = new RTCPeerConnection(ICE_SERVERS);
       viewerState.peerConnection = pc;
 
-      // Handle receiving tracks from Host
       pc.ontrack = (event) => {
         viewerStreamVideo.srcObject = event.streams[0];
         viewerLoadingOverlay.style.display = 'none';
@@ -3280,7 +3248,6 @@
         showToast('Live stream connected!');
       };
 
-      // Handle sending ICE candidates to Host
       pc.onicecandidate = (event) => {
         if (event.candidate) {
           sendViewerSignal('ice-candidate', event.candidate);
@@ -3331,7 +3298,6 @@
       const { type, data } = sig;
       const pc = viewerState.peerConnection;
 
-      // 1. Offer received from Host
       if (type === 'offer') {
         if (!pc) return;
         try {
@@ -3345,7 +3311,6 @@
         return;
       }
 
-      // 2. ICE Candidate from Host
       if (type === 'ice-candidate') {
         if (pc && data) {
           try {
@@ -3357,13 +3322,11 @@
         return;
       }
 
-      // 3. Session Ended
       if (type === 'end-session') {
         handleLiveSessionEnded(data?.reason || 'The host has ended this live session.');
         return;
       }
 
-      // 4. Chat Message
       if (type === 'chat') {
         appendViewerChat(data.sender || 'Host', data.message);
         return;
