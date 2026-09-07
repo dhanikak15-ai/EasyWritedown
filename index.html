@@ -1162,6 +1162,31 @@
       background: transparent;
       cursor: default;
     }
+    .normal-docx-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 960px;
+      margin: 0 auto 30px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 36px 30px;
+      box-shadow: var(--shadow);
+    }
+    .normal-docx-box {
+      width: 100%;
+      color: var(--text);
+    }
+    .docx-wrapper {
+      background: transparent !important;
+      padding: 0 !important;
+    }
+    .docx-wrapper > section.docx {
+      background: var(--surface) !important;
+      color: var(--text) !important;
+      box-shadow: none !important;
+      margin-bottom: 20px !important;
+    }
     @media print {
       body.restricted-mode #viewerScreen { display: none !important; }
     }
@@ -2172,6 +2197,89 @@
       }
     }
 
+    // ── Native In-Browser DOCX Viewer for Normal View ────────────
+    async function renderNormalDocx(source, fileName) {
+      setViewerLoading('Opening your document', 'Rendering Word document…');
+      pptContainer.style.display = 'flex';
+      pptPages.innerHTML = '';
+
+      let rawUrl = (typeof source === 'string' && (source.startsWith('http://') || source.startsWith('https://'))) ? source : null;
+
+      const wrap = document.createElement('div');
+      wrap.className = 'ppt-iframe-wrap';
+
+      // Toolbar with Doc Info and Download button
+      const toolbar = document.createElement('div');
+      toolbar.className = 'doc-toolbar';
+
+      const toolbarLeft = document.createElement('div');
+      toolbarLeft.className = 'doc-toolbar-left';
+      toolbarLeft.innerHTML = `
+        <span class="file-type-badge badge-doc">DOCX</span>
+        <span class="doc-title" style="font-size:0.85rem; font-weight:600; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:320px;">${fileName || 'Document'}</span>
+      `;
+
+      const toolbarRight = document.createElement('div');
+      toolbarRight.className = 'doc-toolbar-right';
+
+      if (rawUrl) {
+        const downloadBtn = document.createElement('a');
+        downloadBtn.className = 'btn-sm btn-white';
+        downloadBtn.href = rawUrl;
+        downloadBtn.target = '_blank';
+        downloadBtn.download = fileName || 'document.docx';
+        downloadBtn.innerHTML = `
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download
+        `;
+        toolbarRight.appendChild(downloadBtn);
+      }
+
+      toolbar.appendChild(toolbarLeft);
+      toolbar.appendChild(toolbarRight);
+      wrap.appendChild(toolbar);
+
+      const docWrapper = document.createElement('div');
+      docWrapper.className = 'normal-docx-wrapper';
+
+      const docBox = document.createElement('div');
+      docBox.className = 'normal-docx-box';
+
+      docWrapper.appendChild(docBox);
+      wrap.appendChild(docWrapper);
+      pptPages.appendChild(wrap);
+
+      try {
+        let arrayBuffer;
+        if (rawUrl) {
+          const res = await fetch(rawUrl);
+          if (!res.ok) throw new Error('Failed to download document');
+          arrayBuffer = await res.arrayBuffer();
+        } else if (typeof source === 'string') {
+          arrayBuffer = b642ab(source);
+        } else {
+          arrayBuffer = source;
+        }
+
+        await docx.renderAsync(arrayBuffer, docBox, null, {
+          inWrapper: false,
+          ignoreWidth: false,
+          ignoreHeight: false
+        });
+
+        viewerLoading.style.display = 'none';
+      } catch (err) {
+        console.error('Normal docx render error:', err);
+        viewerLoading.style.display = 'none';
+        docBox.innerHTML = `
+          <div style="text-align:center; padding: 30px; color: var(--text-muted);">
+            <p style="font-weight:600; color:var(--text); margin-bottom: 8px;">Could not preview document</p>
+            <p style="font-size:0.9rem; margin-bottom: 16px;">${err.message || 'Please use the download button above to view the file.'}</p>
+          </div>
+        `;
+      }
+    }
+
     async function renderOfficeDoc(source, ext, fileName, viewMode = 'normal') {
       if (viewMode === 'restricted') {
         if (ext === 'ppt' || ext === 'pptx') {
@@ -2181,7 +2289,11 @@
         }
       }
 
-      // NORMAL VIEW: Keep Google Docs / Microsoft Office Viewer iframe + toolbar + Download button
+      // NORMAL VIEW: For .docx, use native in-browser docx-preview for reliability, crisp rendering, and zero auto-download/blank screen bugs
+      if (ext === 'docx') {
+        return await renderNormalDocx(source, fileName);
+      }
+
       const isWord = ext === 'doc' || ext === 'docx';
       setViewerLoading(isWord ? 'Opening your document' : 'Opening your presentation', 'Preparing the viewer…');
       pptContainer.style.display = 'flex';
@@ -2217,14 +2329,15 @@
       const toolbarRight = document.createElement('div');
       toolbarRight.className = 'doc-toolbar-right';
 
-      let currentProvider = (rawUrl.startsWith('http://') || rawUrl.startsWith('https://')) ? 'google' : 'local';
+      // Default to Microsoft Office Viewer which doesn't suffer from Google's rate-limiting/download redirect bugs
+      let currentProvider = (rawUrl.startsWith('http://') || rawUrl.startsWith('https://')) ? 'office' : 'local';
 
       const switchBtn = document.createElement('button');
       switchBtn.className = 'btn-sm btn-outline';
       switchBtn.id = 'switchViewerBtn';
       switchBtn.innerHTML = `
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 16V4m0 0L3 8m4-4l4 4m6 4v12m0 0l4-4m-4 4l-4-4"/></svg>
-        <span id="providerLabel">Switch to Office Viewer</span>
+        <span id="providerLabel">Switch to Google Viewer</span>
       `;
 
       // Download button — only shown in Normal mode
@@ -2259,6 +2372,8 @@
         const iframe = document.createElement('iframe');
         iframe.setAttribute('allowfullscreen', 'true');
         iframe.setAttribute('title', isWord ? 'Word Document Viewer' : 'PowerPoint Presentation Viewer');
+        // Sandbox WITHOUT allow-downloads strictly prevents iframes from triggering background downloads of "viewer"
+        iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups');
         iframe.style.width = '100%';
         iframe.style.height = '82vh';
         iframe.style.minHeight = '540px';
