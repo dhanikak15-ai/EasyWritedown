@@ -1824,51 +1824,67 @@
         activateRestrictedMode();
       }
 
-      if (data.fileType === 'pdf') {
-        await renderPDF(data.fileUrl || data.fileData, viewMode);
-      } else {
-        await renderOfficeDoc(data.fileUrl || data.fileData, data.fileType, data.fileName, viewMode);
+      try {
+        if (data.fileType === 'pdf') {
+          await renderPDF(data.fileUrl || data.fileData, viewMode);
+        } else {
+          await renderOfficeDoc(data.fileUrl || data.fileData, data.fileType, data.fileName, viewMode);
+        }
+      } catch (err) {
+        console.error('Error rendering document:', err);
+        viewerLoading.style.display = 'none';
       }
     }
 
-    async function renderPDF(source) {
-      let docInitParams;
-      if (typeof source === 'string' && (source.startsWith('http://') || source.startsWith('https://'))) {
-        docInitParams = { url: source };
-      } else {
-        const buf = typeof source === 'string' ? b642ab(source) : source;
-        docInitParams = { data: buf };
-      }
+    async function renderPDF(source, viewMode = 'normal') {
+      try {
+        let docInitParams;
+        if (typeof source === 'string' && (source.startsWith('http://') || source.startsWith('https://'))) {
+          docInitParams = { url: source };
+        } else {
+          const buf = typeof source === 'string' ? b642ab(source) : source;
+          docInitParams = { data: buf };
+        }
 
-      const pdfDoc = await pdfjsLib.getDocument(docInitParams).promise;
-      const total = pdfDoc.numPages;
+        const pdfDoc = await pdfjsLib.getDocument(docInitParams).promise;
+        const total = pdfDoc.numPages;
 
-      setViewerLoading('Opening your document', `Rendering ${total} page${total === 1 ? '' : 's'}`);
-      pdfContainer.style.display = 'flex';
+        setViewerLoading('Opening your document', `Rendering ${total} page${total === 1 ? '' : 's'}`);
+        pdfContainer.style.display = 'flex';
 
-      const scale = window.innerWidth < 600 ? 1.0 : window.innerWidth < 900 ? 1.4 : 1.8;
+        const scale = window.innerWidth < 600 ? 1.0 : window.innerWidth < 900 ? 1.4 : 1.8;
 
-      for (let i = 1; i <= total; i++) {
-        const page = await pdfDoc.getPage(i);
-        const viewport = page.getViewport({ scale });
-        const canvas = document.createElement('canvas');
-        canvas.className = 'page-canvas';
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-        await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+        for (let i = 1; i <= total; i++) {
+          const page = await pdfDoc.getPage(i);
+          const viewport = page.getViewport({ scale });
+          const canvas = document.createElement('canvas');
+          canvas.className = 'page-canvas';
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
 
-        const lbl = document.createElement('div');
-        lbl.className = 'page-counter';
-        lbl.textContent = `Page ${i} of ${total}`;
+          const lbl = document.createElement('div');
+          lbl.className = 'page-counter';
+          lbl.textContent = `Page ${i} of ${total}`;
 
-        pdfPages.appendChild(canvas);
-        pdfPages.appendChild(lbl);
+          pdfPages.appendChild(canvas);
+          pdfPages.appendChild(lbl);
 
-        if (i === 1) viewerLoading.style.display = 'none';
+          if (i === 1) viewerLoading.style.display = 'none';
+        }
+        viewerLoading.style.display = 'none';
+      } catch (err) {
+        console.error('PDF render error:', err);
+        viewerLoading.style.display = 'none';
+        pdfContainer.style.display = 'flex';
+        pdfPages.innerHTML = `<div style="text-align:center; padding: 40px 20px; color: var(--text-muted);">
+          <p style="font-weight:600; color:var(--text); margin-bottom: 8px;">Failed to render PDF</p>
+          <p style="font-size:0.9rem;">${err.message || 'Unknown error'}</p>
+        </div>`;
       }
     }
 
-    async function renderOfficeDoc(source, ext, fileName) {
+    async function renderOfficeDoc(source, ext, fileName, viewMode = 'normal') {
       const isWord = ext === 'doc' || ext === 'docx';
       setViewerLoading(isWord ? 'Opening your document' : 'Opening your presentation', 'Preparing the viewer…');
       pptContainer.style.display = 'flex';
@@ -1969,9 +1985,12 @@
         }
 
         iframe.src = src;
-        iframe.addEventListener('load', () => {
+        const hideLoading = () => {
           viewerLoading.style.display = 'none';
-        }, { once: true });
+        };
+        iframe.addEventListener('load', hideLoading, { once: true });
+        // Failsafe: hide spinner after 2.5s in case iframe cross-origin doesn't trigger onload
+        setTimeout(hideLoading, 2500);
 
         contentBox.appendChild(iframe);
 
