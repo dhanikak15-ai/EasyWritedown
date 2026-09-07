@@ -233,4 +233,6 @@ Check the region, access key, secret key, IAM permissions, and deployment enviro
 
 ## License
 
-No license has been declared yet. Add a license before distributing or accepting external contributions.
+No license has been declared yet. Open-source - anyone can use the code but with their specified/created credentials.
+
+## Built by DK 
