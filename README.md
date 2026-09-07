@@ -8,7 +8,7 @@ This project is also a practical first AWS cloud integration: it keeps the infra
 
 ## Features
 
-- Upload PDF, PPT, and PPTX files up to 10 MB.
+- Upload PDF, PPT, and PPTX files up to 100 MB.
 - Choose a URL-friendly page name such as `quarterly-report`.
 - Upload files directly from the browser to Amazon S3 with a presigned URL.
 - Store page metadata in Amazon DynamoDB.
@@ -46,7 +46,7 @@ flowchart LR
 
 ### Why this architecture?
 
-The API does not proxy a 10 MB file through the serverless function. Instead, it authorizes the upload and returns a short-lived S3 URL; the browser sends the file directly to S3. This reduces API bandwidth, keeps the API stateless, and makes the storage boundary explicit.
+The API does not proxy a 100 MB file through the serverless function. Instead, it authorizes the upload and returns a short-lived S3 URL; the browser sends the file directly to S3. This reduces API bandwidth, keeps the API stateless, and makes the storage boundary explicit.
 
 DynamoDB acts as the page directory. A page name is the partition key, so looking up `/quarterly-report` is a direct, single-item read rather than a scan.
 
@@ -54,7 +54,7 @@ DynamoDB acts as the page directory. A page name is the partition key, so lookin
 
 1. The user selects a supported file and enters a page name.
 2. The browser sends file metadata to `POST /api/upload-request`.
-3. The API normalizes the page name and validates the extension and 10 MB limit.
+3. The API normalizes the page name and validates the extension and 100 MB limit.
 4. The API creates an S3 object key such as `uploads/quarterly-report-<timestamp>.pdf`.
 5. The API returns a presigned S3 `PUT` URL that expires after 15 minutes.
 6. The API writes the page metadata to DynamoDB.

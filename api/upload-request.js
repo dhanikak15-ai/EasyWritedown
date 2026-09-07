@@ -40,9 +40,9 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid page name' });
     }
 
-    const MAX_SIZE = 10 * 1024 * 1024;
+    const MAX_SIZE = 100 * 1024 * 1024;
     if (fileSize && fileSize > MAX_SIZE) {
-      return res.status(400).json({ error: 'File size exceeds 10 MB limit' });
+      return res.status(400).json({ error: 'File size exceeds 100 MB limit' });
     }
 
     const cleanExt = fileType.toLowerCase().replace(/^\./, '');

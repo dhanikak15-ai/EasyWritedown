@@ -1028,7 +1028,7 @@
       <div class="modal-header">
         <div>
           <div class="modal-title" id="modalTitle">Upload Document</div>
-          <div class="modal-sub">PDF or PowerPoint files only (max 10 MB)</div>
+          <div class="modal-sub">PDF or PowerPoint files only (max 100 MB)</div>
         </div>
         <button class="modal-close" id="modalClose" aria-label="Close">&#x2715;</button>
       </div>
@@ -1044,7 +1044,7 @@
           </svg>
         </div>
         <div class="drop-label">Drop your file here</div>
-        <div class="drop-hint">or click to browse — .pdf, .ppt, .pptx accepted (max 10 MB)</div>
+        <div class="drop-hint">or click to browse — .pdf, .ppt, .pptx accepted (max 100 MB)</div>
       </div>
 
       <div class="file-preview" id="filePreview">
@@ -1305,6 +1305,29 @@
       showHome();
     }
 
+    // Privacy & Terms Modals
+    const privacyModal = document.getElementById('privacyModal');
+    const termsModal = document.getElementById('termsModal');
+
+    function openPolicyModal(path) {
+      if (location.protocol !== 'file:') {
+        history.pushState({ policy: path }, '', path);
+      }
+      const modal = path === '/privacy' ? privacyModal : termsModal;
+      const otherModal = path === '/privacy' ? termsModal : privacyModal;
+      if (otherModal) otherModal.classList.remove('open');
+      if (modal) modal.classList.add('open');
+      updateCanonical(path);
+    }
+
+    function closePolicyModal(modal) {
+      if (modal) modal.classList.remove('open');
+      if (location.protocol !== 'file:' && (location.pathname === '/privacy' || location.pathname === '/terms')) {
+        history.pushState({}, '', '/');
+        updateCanonical('/');
+      }
+    }
+
     window.addEventListener('popstate', route);
     window.addEventListener('hashchange', route);
     window.addEventListener('load', route);
@@ -1314,10 +1337,15 @@
       if (routePath === '/privacy' || routePath === '/terms') {
         showHome();
         const policyModal = routePath === '/privacy' ? privacyModal : termsModal;
-        policyModal.classList.add('open');
+        const otherModal = routePath === '/privacy' ? termsModal : privacyModal;
+        if (otherModal) otherModal.classList.remove('open');
+        if (policyModal) policyModal.classList.add('open');
         updateCanonical(routePath);
         return;
       }
+
+      if (privacyModal) privacyModal.classList.remove('open');
+      if (termsModal) termsModal.classList.remove('open');
 
       const p = getPageFromUrl();
       p ? loadPage(p) : showHome();
@@ -1328,19 +1356,31 @@
     document.getElementById('uploadCard').addEventListener('keydown', e => e.key === 'Enter' && openModal());
     const vCard = document.getElementById('viewCard');
     if (vCard) vCard.addEventListener('click', () => document.getElementById('pageNameInput').focus());
-    // Privacy & Terms Modal Listeners
-    const privacyModal = document.getElementById('privacyModal');
-    const termsModal = document.getElementById('termsModal');
 
-    document.getElementById('privacyLink').addEventListener('click', () => privacyModal.classList.add('open'));
-    document.getElementById('privacyClose').addEventListener('click', () => privacyModal.classList.remove('open'));
-    document.getElementById('privacyOkBtn').addEventListener('click', () => privacyModal.classList.remove('open'));
-    privacyModal.addEventListener('click', e => { if (e.target === privacyModal) privacyModal.classList.remove('open'); });
+    // Privacy & Terms Modal Listeners (preventing page navigation / double open)
+    document.getElementById('privacyLink').addEventListener('click', e => {
+      e.preventDefault();
+      openPolicyModal('/privacy');
+    });
+    document.getElementById('privacyClose').addEventListener('click', () => closePolicyModal(privacyModal));
+    document.getElementById('privacyOkBtn').addEventListener('click', () => closePolicyModal(privacyModal));
+    privacyModal.addEventListener('click', e => { if (e.target === privacyModal) closePolicyModal(privacyModal); });
 
-    document.getElementById('termsLink').addEventListener('click', () => termsModal.classList.add('open'));
-    document.getElementById('termsClose').addEventListener('click', () => termsModal.classList.remove('open'));
-    document.getElementById('termsOkBtn').addEventListener('click', () => termsModal.classList.remove('open'));
-    termsModal.addEventListener('click', e => { if (e.target === termsModal) termsModal.classList.remove('open'); });
+    document.getElementById('termsLink').addEventListener('click', e => {
+      e.preventDefault();
+      openPolicyModal('/terms');
+    });
+    document.getElementById('termsClose').addEventListener('click', () => closePolicyModal(termsModal));
+    document.getElementById('termsOkBtn').addEventListener('click', () => closePolicyModal(termsModal));
+    termsModal.addEventListener('click', e => { if (e.target === termsModal) closePolicyModal(termsModal); });
+
+    window.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        if (privacyModal && privacyModal.classList.contains('open')) closePolicyModal(privacyModal);
+        if (termsModal && termsModal.classList.contains('open')) closePolicyModal(termsModal);
+        if (uploadModal && uploadModal.classList.contains('open')) closeModal();
+      }
+    });
 
     document.getElementById('gotoBtn').addEventListener('click', gotoPage);
     document.getElementById('pageNameInput').addEventListener('keydown', e => e.key === 'Enter' && gotoPage());
@@ -1409,8 +1449,8 @@
     function handleFile(file) {
       const ext = file.name.split('.').pop().toLowerCase();
       if (!['pdf', 'ppt', 'pptx'].includes(ext)) { setStatus('Only PDF and PowerPoint files are allowed.', true); return; }
-      if (file.size > 10 * 1024 * 1024) {
-        setStatus('File size exceeds the 10 MB limit. Please select a smaller file.', true);
+      if (file.size > 100 * 1024 * 1024) {
+        setStatus('File size exceeds the 100 MB limit. Please select a smaller file.', true);
         fileInput.value = '';
         return;
       }
@@ -1513,10 +1553,11 @@
           setStatus('Cloud upload failed, saving locally…', false);
         }
 
-        // Always save a local copy in IndexedDB
+        // Always save a local copy in IndexedDB (use raw buffer for large files)
         const buf = await readAsArrayBuffer(selectedFile);
         const ext = selectedFile.name.split('.').pop().toLowerCase();
-        await savePage(pageName, ab2b64(buf), ext);
+        const storedData = selectedFile.size > 5 * 1024 * 1024 ? buf : ab2b64(buf);
+        await savePage(pageName, storedData, ext);
 
         progressBar.style.width = '100%';
         setStatus(uploadedToCloud ? 'Published to cloud! Redirecting…' : 'Published locally! Redirecting…', false);
