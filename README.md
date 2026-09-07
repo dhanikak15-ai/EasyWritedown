@@ -6,6 +6,18 @@ DONTCBOARD is a small full-stack document publishing application built around an
 
 This project is also a practical first AWS cloud integration: it keeps the infrastructure understandable while using the same design principles used by larger cloud applications: least-privilege access, direct-to-object-storage uploads, durable metadata, and stateless API endpoints.
 
+## Main Uses
+
+- **Classroom Presentation Sharing** – Teachers upload PPT/PPTX files and share a simple link with students.
+- **Clear Code Visibility** – Students can view slides clearly on their own devices instead of struggling to read the classroom board.
+- **Independent Slide Navigation** – Students can move to previous or specific slides without affecting others.
+- **Faster Teaching** – Teachers can continue teaching without waiting for everyone to finish copying code.
+- **Coding Alongside Slides** – Students can keep the presentation beside VS Code, Ubuntu, VirtualBox, or other coding tools.
+- **Easy Revision** – Students can open the same shared presentation from home and revisit previous code and concepts.
+- **Simple, No-Login Access** – Students can open the classroom link directly without creating an account or managing files.
+- **Less Storage Management** – Teachers upload once and share the presentation instead of repeatedly sending or managing files.
+- **View-Only Learning** – Presentations are available in Restricted / Normal view options.
+
 ## Features
 
 - Upload PDF, PPT, and PPTX files up to 100 MB.
