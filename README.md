@@ -15,33 +15,29 @@ This project is also a practical first AWS cloud integration: it keeps the infra
 - Generate temporary, presigned download URLs when a page is viewed.
 - Render PDFs with PDF.js and PowerPoint files through an embedded online viewer.
 - Keep a browser-local IndexedDB copy as a fallback when cloud access is unavailable.
-- Deploy as a static frontend plus serverless API routes on Vercel.
-- Run locally with a small Node.js HTTP server.
+- Production hosting 100% on AWS (CloudFront CDN, S3, Lambda, DynamoDB) with custom domain support.
+- Static XML sitemap, robots.txt, and JSON-LD structured data for Google Search Console indexing.
+- Run locally with a small Node.js HTTP server or deploy to Vercel.
 
 ## AWS Architecture
 
 ```mermaid
 flowchart LR
-    User[Browser]
-    Frontend[index.html]
-    UploadAPI[POST /api/upload-request\nVercel Function]
-    PageAPI[GET /api/page\nVercel Function]
-    S3[(Amazon S3\nDocument objects)]
-    DDB[(Amazon DynamoDB\nPage metadata)]
-    PDF[PDF.js / Office Viewer]
-    Local[(IndexedDB\nLocal fallback)]
+    User[Browser / Googlebot]
+    DNS[Namecheap DNS\ndontcboard.me]
+    CF[AWS CloudFront CDN\nFree ACM SSL Cert + 1 TB Free Bandwidth]
+    S3Front[(Amazon S3\nFrontend: index.html, sitemap.xml, robots.txt)]
+    Lambda[AWS Lambda Function\ndontcboard-api / lambda.js]
+    S3Docs[(Amazon S3\nUploaded Documents)]
+    DDB[(Amazon DynamoDB\nPage Metadata)]
 
-    User --> Frontend
-    Frontend -->|Request upload URL + metadata| UploadAPI
-    UploadAPI -->|PutObject presigned URL| Frontend
-    Frontend -->|Direct PUT file bytes| S3
-    UploadAPI -->|PutItem| DDB
-    Frontend -->|Request page metadata| PageAPI
-    PageAPI -->|GetItem| DDB
-    PageAPI -->|GetObject presigned URL| S3
-    PageAPI -->|Temporary file URL| Frontend
-    Frontend --> PDF
-    Frontend -->|Save/read fallback copy| Local
+    User --> DNS
+    DNS --> CF
+    CF -->|Default /* & SPA rewrites| S3Front
+    CF -->|Path /api/*| Lambda
+    Lambda -->|Presigned GET/PUT URLs| User
+    User -->|Direct document upload| S3Docs
+    Lambda -->|Item lookup & creation| DDB
 ```
 
 ### Why this architecture?
@@ -49,6 +45,8 @@ flowchart LR
 The API does not proxy a 100 MB file through the serverless function. Instead, it authorizes the upload and returns a short-lived S3 URL; the browser sends the file directly to S3. This reduces API bandwidth, keeps the API stateless, and makes the storage boundary explicit.
 
 DynamoDB acts as the page directory. A page name is the partition key, so looking up `/quarterly-report` is a direct, single-item read rather than a scan.
+
+CloudFront serves both the static frontend (SPA) from a private S3 bucket and the serverless API (`/api/*`) on the same domain (`dontcboard.me`), completely eliminating CORS issues and providing 1 TB/month of free edge transfer.
 
 ## Upload Flow
 
@@ -85,97 +83,27 @@ DynamoDB acts as the page directory. A page name is the partition key, so lookin
 
 No sort key is required for the current one-document-per-page model. Publishing the same page name replaces its DynamoDB metadata with a new object key.
 
-## AWS Setup
+## AWS Production Deployment
 
-### 1. Create the S3 bucket
+1. **Frontend Hosting (S3 + CloudFront)**:
+   - S3 Bucket: `dontcboard-frontend-392087426683` (private, protected with Origin Access Control).
+   - Contains `index.html`, `sitemap.xml`, `robots.txt`, and `icon.png`.
+   - CloudFront Distribution: attached to ACM certificate in `us-east-1` for `dontcboard.me` and `www.dontcboard.me`.
+   - Custom error responses: 403 and 404 rewrite to `/index.html` with HTTP 200 for SPA routing.
 
-Create a private S3 bucket in the region you plan to use. Keep **Block all public access** enabled. DONTCBOARD uses presigned URLs, so the bucket does not need to be public.
+2. **Backend API (AWS Lambda Function)**:
+   - Function: `dontcboard-api` (`Node.js 20.x/24.x`).
+   - Handler code: `lambda.js` handling `GET /api/page` and `POST /api/upload-request`.
+   - Attached to CloudFront behavior for path pattern `/api/*`.
+   - IAM Execution Role policies: `AmazonDynamoDBFullAccess` and `AmazonS3FullAccess`.
 
-Use a globally unique bucket name, for example:
+3. **SEO & Google Search Console**:
+   - `sitemap.xml`: XML sitemap listing `https://dontcboard.me/`, `/privacy`, and `/terms`.
+   - `robots.txt`: Allows search crawlers and points to `https://dontcboard.me/sitemap.xml`.
+   - Structured Data: JSON-LD `WebApplication` schema for rich indexing.
+   - Canonical URLs: Absolute `https://dontcboard.me/` canonical tag.
 
-```text
-easywritedown-files-your-unique-id
-```
-
-Add CORS so the browser can make the presigned `PUT` request. Replace the origin with your real domain before production:
-
-```json
-[
-  {
-    "AllowedOrigins": ["http://localhost:3000", "https://dontcboard.me"],
-    "AllowedMethods": ["PUT", "GET", "HEAD"],
-    "AllowedHeaders": ["Content-Type"],
-    "ExposeHeaders": ["ETag"],
-    "MaxAgeSeconds": 3000
-  }
-]
-```
-
-### 2. Create the DynamoDB table
-
-Create a table with:
-
-- Table name: `easywritedown-pages`
-- Partition key: `pageName`
-- Partition key type: `String`
-- Billing mode: `On-demand`
-
-On-demand billing is a straightforward starting point for a small or unpredictable workload. Review the AWS pricing for your region before going live.
-
-### 3. Create an IAM identity for the API
-
-The API needs to generate S3 presigned URLs and read/write DynamoDB metadata. A focused policy is better than granting administrator access. Replace the placeholders with your AWS account, bucket, and table values:
-
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Sid": "DocumentBucketAccess",
-      "Effect": "Allow",
-      "Action": [
-        "s3:PutObject",
-        "s3:GetObject"
-      ],
-      "Resource": "arn:aws:s3:::YOUR_BUCKET_NAME/uploads/*"
-    },
-    {
-      "Sid": "PageMetadataAccess",
-      "Effect": "Allow",
-      "Action": [
-        "dynamodb:GetItem",
-        "dynamodb:PutItem"
-      ],
-      "Resource": "arn:aws:dynamodb:YOUR_AWS_REGION:YOUR_ACCOUNT_ID:table/easywritedown-pages"
-    }
-  ]
-}
-```
-
-For Vercel, prefer an IAM user or role credential mechanism supported by your deployment setup, and store credentials only as encrypted project environment variables. Never commit access keys to Git.
-
-## Environment Variables
-
-Copy `.env.example` to `.env` for local development and fill in real values:
-
-```env
-AWS_REGION=us-east-1
-S3_BUCKET=your-private-bucket-name
-DYNAMODB_TABLE=easywritedown-pages
-AWS_ACCESS_KEY_ID=your_access_key_id
-AWS_SECRET_ACCESS_KEY=your_secret_access_key
-```
-
-The AWS SDK automatically reads these variables. Do not add `.env` to source control; it is already ignored by `.gitignore`.
-
-## Run Locally
-
-Prerequisites:
-
-- Node.js 18 or newer
-- An AWS account
-- The S3 bucket and DynamoDB table created above
-- AWS credentials with the focused permissions above
+## Local Development
 
 Install dependencies and start the local server:
 
@@ -185,30 +113,6 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
-
-The local server serves `index.html` and forwards `/api/page` and `/api/upload-request` to the same handlers used by the deployment. Your local browser origin must be included in the S3 CORS configuration.
-
-## Deploy to Vercel
-
-1. Import this repository into Vercel.
-2. Add the following Project Environment Variables:
-    - `SITE_URL=https://dontcboard.me`
-   - `AWS_REGION`
-   - `S3_BUCKET`
-   - `DYNAMODB_TABLE`
-   - `AWS_ACCESS_KEY_ID`
-   - `AWS_SECRET_ACCESS_KEY`
-3. Deploy the project.
-4. Add the deployed Vercel origin to the S3 bucket CORS `AllowedOrigins` list.
-5. Upload a small PDF and verify that its page opens in a new browser session.
-
-After deployment, verify `https://dontcboard.me/robots.txt` and
-`https://dontcboard.me/sitemap.xml` in a browser. In Google Search Console,
-add the site property and submit `sitemap.xml`. The sitemap currently lists the
-homepage, while document pages are created dynamically and are not enumerated
-until a public page directory exists.
-
-`vercel.json` routes API requests to the files in `api/` and rewrites document paths back to the frontend so a page such as `/quarterly-report` can load directly.
 
 ## API Reference
 
