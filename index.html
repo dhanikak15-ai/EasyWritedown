@@ -1062,7 +1062,20 @@
       line-height: 1.5;
     }
 
-    /* ── Restricted Viewer Protection ─────────────────────────── */
+    /* ── Restricted Viewer Protection & Custom Canvas Viewer ── */
+    .restricted-header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      border-radius: 999px;
+      background: rgba(239, 68, 68, 0.12);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.28);
+    }
     body.restricted-mode #viewerScreen,
     body.restricted-mode #viewerScreen * {
       user-select: none !important;
@@ -1074,6 +1087,72 @@
     }
     body.restricted-mode .page-canvas {
       pointer-events: none;
+    }
+    .slide-card-wrap {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      margin-bottom: 24px;
+    }
+    .slide-card-wrap .page-canvas {
+      display: block;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      background: #ffffff;
+      max-width: 100%;
+    }
+    .canvas-shield {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      background: transparent;
+      cursor: default;
+    }
+    .restricted-docx-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto 30px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 36px 30px;
+      box-shadow: var(--shadow);
+      user-select: none;
+    }
+    .docx-shield {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      background: transparent;
+      cursor: default;
+    }
+    .restricted-info-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 40px 24px;
+      text-align: center;
+      max-width: 520px;
+      margin: 40px auto;
+      box-shadow: var(--shadow);
+    }
+    .restricted-info-icon {
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+    .restricted-info-card h3 {
+      font-size: 1.15rem;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+    .restricted-info-card p {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.6;
     }
     /* Transparent shield over iframe in restricted mode */
     .iframe-shield {
@@ -1237,6 +1316,10 @@
         <img class="viewer-logo-mark" src="icon.png" alt="" />
         <span>DONT<span class="brand-c">C</span>BOARD</span>
       </div>
+      <div class="restricted-header-badge" id="restrictedBadge" style="display:none;">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <span>Restricted View (No Copy)</span>
+      </div>
     </div>
 
     <div class="viewer-loading" id="viewerLoading">
@@ -1335,6 +1418,9 @@
   </button>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pptx-viewer@0.2.2/dist/pptx-viewer.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/docx-preview@latest/dist/docx-preview.min.js"></script>
   <script>
     // ── Theme toggle ──────────────────────────────────────────────
     (function () {
@@ -1426,7 +1512,9 @@
       updateCanonical('/');
       if (typeof privacyModal !== 'undefined') privacyModal.classList.remove('open');
       if (typeof termsModal !== 'undefined') termsModal.classList.remove('open');
-      document.removeEventListener('keydown', blockShortcuts, true);
+      deactivateRestrictedMode();
+      const rb = document.getElementById('restrictedBadge');
+      if (rb) rb.style.display = 'none';
     }
     function showViewer() {
       homeScreen.style.display = 'none';
@@ -1818,10 +1906,14 @@
         return;
       }
 
-      // Apply protection only when viewMode is 'restricted'
       const viewMode = data.viewMode || 'normal';
+      const restrictedBadge = document.getElementById('restrictedBadge');
       if (viewMode === 'restricted') {
         activateRestrictedMode();
+        if (restrictedBadge) restrictedBadge.style.display = 'inline-flex';
+      } else {
+        deactivateRestrictedMode();
+        if (restrictedBadge) restrictedBadge.style.display = 'none';
       }
 
       try {
@@ -1851,24 +1943,60 @@
 
         setViewerLoading('Opening your document', `Rendering ${total} page${total === 1 ? '' : 's'}`);
         pdfContainer.style.display = 'flex';
+        pdfPages.innerHTML = '';
+
+        // In normal view, add a toolbar with download button if available
+        if (viewMode !== 'restricted' && typeof source === 'string' && (source.startsWith('http://') || source.startsWith('https://'))) {
+          const toolbar = document.createElement('div');
+          toolbar.className = 'doc-toolbar';
+          toolbar.style.maxWidth = '860px';
+          toolbar.style.width = '100%';
+          toolbar.style.margin = '0 auto 16px';
+          toolbar.innerHTML = `
+            <div class="doc-toolbar-left">
+              <span class="file-type-badge badge-pdf">PDF</span>
+              <span class="doc-title" style="font-size:0.85rem; font-weight:600; color:var(--text);">${total} Page${total === 1 ? '' : 's'}</span>
+            </div>
+            <div class="doc-toolbar-right">
+              <a class="btn-sm btn-white" href="${source}" target="_blank" download>
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download
+              </a>
+            </div>
+          `;
+          pdfPages.appendChild(toolbar);
+        }
 
         const scale = window.innerWidth < 600 ? 1.0 : window.innerWidth < 900 ? 1.4 : 1.8;
 
         for (let i = 1; i <= total; i++) {
           const page = await pdfDoc.getPage(i);
           const viewport = page.getViewport({ scale });
+
+          const pageWrap = document.createElement('div');
+          pageWrap.className = 'slide-card-wrap';
+
           const canvas = document.createElement('canvas');
           canvas.className = 'page-canvas';
           canvas.width = viewport.width;
           canvas.height = viewport.height;
           await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
 
+          pageWrap.appendChild(canvas);
+
+          if (viewMode === 'restricted') {
+            const shield = document.createElement('div');
+            shield.className = 'canvas-shield';
+            shield.addEventListener('contextmenu', e => e.preventDefault());
+            pageWrap.appendChild(shield);
+          }
+
           const lbl = document.createElement('div');
           lbl.className = 'page-counter';
           lbl.textContent = `Page ${i} of ${total}`;
+          pageWrap.appendChild(lbl);
 
-          pdfPages.appendChild(canvas);
-          pdfPages.appendChild(lbl);
+          pdfPages.appendChild(pageWrap);
 
           if (i === 1) viewerLoading.style.display = 'none';
         }
@@ -1884,7 +2012,176 @@
       }
     }
 
+    // ── Custom In-Browser Restricted PPTX Viewer (Canvas Based) ───
+    async function renderRestrictedPPTX(source, ext, fileName) {
+      setViewerLoading('Opening presentation', 'Loading slides in protected viewer…');
+      pptContainer.style.display = 'flex';
+      pptPages.innerHTML = '';
+
+      if (ext === 'ppt') {
+        viewerLoading.style.display = 'none';
+        pptPages.innerHTML = `
+          <div class="restricted-info-card">
+            <div class="restricted-info-icon">
+              <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </div>
+            <h3>Protected Presentation Viewer</h3>
+            <p>Legacy <strong>.ppt</strong> files require conversion to <strong>.pptx</strong> or <strong>.pdf</strong> for client-side canvas rendering. Please save your presentation as .pptx or .pdf and re-upload for full restricted view.</p>
+          </div>
+        `;
+        return;
+      }
+
+      try {
+        let arrayBuffer;
+        if (typeof source === 'string' && (source.startsWith('http://') || source.startsWith('https://'))) {
+          const res = await fetch(source);
+          if (!res.ok) throw new Error('Failed to download presentation file');
+          arrayBuffer = await res.arrayBuffer();
+        } else if (typeof source === 'string') {
+          arrayBuffer = b642ab(source);
+        } else {
+          arrayBuffer = source;
+        }
+
+        const uint8 = new Uint8Array(arrayBuffer);
+        const presentation = await PPTXViewer.loadPresentation(uint8);
+        const total = presentation.slides ? presentation.slides.length : 0;
+
+        if (total === 0) {
+          throw new Error('No slides found in presentation');
+        }
+
+        setViewerLoading('Opening presentation', `Rendering ${total} slide${total === 1 ? '' : 's'}…`);
+
+        const slideWidth = presentation.slideSize?.width || 960;
+        const slideHeight = presentation.slideSize?.height || 540;
+        const aspectRatio = slideWidth / slideHeight;
+        const maxDisplayWidth = Math.min(window.innerWidth - 32, 960);
+        const displayHeight = Math.round(maxDisplayWidth / aspectRatio);
+
+        const renderWidth = Math.round(maxDisplayWidth * 1.5);
+        const renderHeight = Math.round(displayHeight * 1.5);
+
+        for (let i = 0; i < total; i++) {
+          const slideWrap = document.createElement('div');
+          slideWrap.className = 'slide-card-wrap';
+
+          const canvas = document.createElement('canvas');
+          canvas.className = 'page-canvas slide-canvas';
+          canvas.width = renderWidth;
+          canvas.height = renderHeight;
+          canvas.style.width = '100%';
+          canvas.style.maxWidth = `${maxDisplayWidth}px`;
+          canvas.style.aspectRatio = `${aspectRatio}`;
+
+          const shield = document.createElement('div');
+          shield.className = 'canvas-shield';
+          shield.addEventListener('contextmenu', e => e.preventDefault());
+
+          await PPTXViewer.renderSlideToCanvas(presentation, i, canvas);
+
+          const lbl = document.createElement('div');
+          lbl.className = 'page-counter';
+          lbl.textContent = `Slide ${i + 1} of ${total}`;
+
+          slideWrap.appendChild(canvas);
+          slideWrap.appendChild(shield);
+          slideWrap.appendChild(lbl);
+          pptPages.appendChild(slideWrap);
+
+          if (i === 0) {
+            viewerLoading.style.display = 'none';
+          }
+        }
+        viewerLoading.style.display = 'none';
+      } catch (err) {
+        console.error('Restricted PPTX error:', err);
+        viewerLoading.style.display = 'none';
+        pptPages.innerHTML = `
+          <div class="restricted-info-card">
+            <h3>Could not render slides in restricted mode</h3>
+            <p style="color:var(--text-muted); font-size:0.88rem; margin-top:8px;">${err.message || 'Error processing presentation'}</p>
+          </div>
+        `;
+      }
+    }
+
+    // ── Custom In-Browser Restricted DOCX Viewer ───────────────────
+    async function renderRestrictedDocx(source, ext, fileName) {
+      setViewerLoading('Opening document', 'Loading document in protected viewer…');
+      pptContainer.style.display = 'flex';
+      pptPages.innerHTML = '';
+
+      if (ext === 'doc') {
+        viewerLoading.style.display = 'none';
+        pptPages.innerHTML = `
+          <div class="restricted-info-card">
+            <div class="restricted-info-icon">
+              <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </div>
+            <h3>Protected Document Viewer</h3>
+            <p>Legacy <strong>.doc</strong> files require conversion to <strong>.docx</strong> or <strong>.pdf</strong> for client-side rendering. Please save your file as .docx or .pdf and re-upload for full restricted view.</p>
+          </div>
+        `;
+        return;
+      }
+
+      try {
+        let arrayBuffer;
+        if (typeof source === 'string' && (source.startsWith('http://') || source.startsWith('https://'))) {
+          const res = await fetch(source);
+          if (!res.ok) throw new Error('Failed to download document file');
+          arrayBuffer = await res.arrayBuffer();
+        } else if (typeof source === 'string') {
+          arrayBuffer = b642ab(source);
+        } else {
+          arrayBuffer = source;
+        }
+
+        const docWrapper = document.createElement('div');
+        docWrapper.className = 'restricted-docx-wrapper';
+
+        const docBox = document.createElement('div');
+        docBox.className = 'restricted-docx-box';
+
+        const shield = document.createElement('div');
+        shield.className = 'docx-shield';
+        shield.addEventListener('contextmenu', e => e.preventDefault());
+
+        docWrapper.appendChild(docBox);
+        docWrapper.appendChild(shield);
+        pptPages.appendChild(docWrapper);
+
+        await docx.renderAsync(arrayBuffer, docBox, null, {
+          inWrapper: false,
+          ignoreWidth: false,
+          ignoreHeight: false
+        });
+
+        viewerLoading.style.display = 'none';
+      } catch (err) {
+        console.error('Restricted Docx error:', err);
+        viewerLoading.style.display = 'none';
+        pptPages.innerHTML = `
+          <div class="restricted-info-card">
+            <h3>Could not render document</h3>
+            <p style="color:var(--text-muted); font-size:0.88rem; margin-top:8px;">${err.message || 'Error processing document'}</p>
+          </div>
+        `;
+      }
+    }
+
     async function renderOfficeDoc(source, ext, fileName, viewMode = 'normal') {
+      if (viewMode === 'restricted') {
+        if (ext === 'ppt' || ext === 'pptx') {
+          return await renderRestrictedPPTX(source, ext, fileName);
+        } else if (ext === 'doc' || ext === 'docx') {
+          return await renderRestrictedDocx(source, ext, fileName);
+        }
+      }
+
+      // NORMAL VIEW: Keep Google Docs / Microsoft Office Viewer iframe + toolbar + Download button
       const isWord = ext === 'doc' || ext === 'docx';
       setViewerLoading(isWord ? 'Opening your document' : 'Opening your presentation', 'Preparing the viewer…');
       pptContainer.style.display = 'flex';
@@ -1995,7 +2292,6 @@
         contentBox.appendChild(iframe);
 
         // In restricted mode, place a transparent shield over the iframe
-        // to block right-click and drag interactions from reaching it
         if (viewMode === 'restricted') {
           const shield = document.createElement('div');
           shield.className = 'iframe-shield';
@@ -2023,12 +2319,37 @@
       document.body.classList.add('restricted-mode');
       document.addEventListener('keydown', blockShortcuts, true);
       document.addEventListener('contextmenu', blockContext, true);
-      document.addEventListener('copy', e => { e.preventDefault(); }, true);
-      document.addEventListener('cut', e => { e.preventDefault(); }, true);
-      window.addEventListener('beforeprint', () => {
+      document.addEventListener('copy', blockEvent, true);
+      document.addEventListener('cut', blockEvent, true);
+      document.addEventListener('selectstart', blockEvent, true);
+      document.addEventListener('dragstart', blockEvent, true);
+      window.addEventListener('beforeprint', hidePrintPreview);
+    }
+
+    function deactivateRestrictedMode() {
+      _restrictedActive = false;
+      document.body.classList.remove('restricted-mode');
+      document.removeEventListener('keydown', blockShortcuts, true);
+      document.removeEventListener('contextmenu', blockContext, true);
+      document.removeEventListener('copy', blockEvent, true);
+      document.removeEventListener('cut', blockEvent, true);
+      document.removeEventListener('selectstart', blockEvent, true);
+      document.removeEventListener('dragstart', blockEvent, true);
+      window.removeEventListener('beforeprint', hidePrintPreview);
+    }
+
+    function blockEvent(e) {
+      if (_restrictedActive) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    }
+
+    function hidePrintPreview() {
+      if (_restrictedActive) {
         document.body.style.visibility = 'hidden';
         setTimeout(() => { document.body.style.visibility = ''; }, 2000);
-      });
+      }
     }
 
     function blockShortcuts(e) {
