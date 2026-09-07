@@ -490,11 +490,11 @@
       border: 1px solid var(--border);
       border-radius: var(--radius-lg);
       width: 100%;
-      max-width: 460px;
-      padding: 36px 32px;
+      max-width: 440px;
+      padding: 24px 22px;
       display: flex;
       flex-direction: column;
-      gap: 24px;
+      gap: 12px;
       transform: translateY(12px) scale(0.98);
       transition: transform 0.22s ease;
     }
@@ -510,15 +510,15 @@
     }
 
     .modal-title {
-      font-size: 1.15rem;
+      font-size: 1.12rem;
       font-weight: 700;
       color: var(--text);
     }
 
     .modal-sub {
-      font-size: 0.82rem;
+      font-size: 0.8rem;
       color: var(--text-muted);
-      margin-top: 4px;
+      margin-top: 3px;
     }
 
     .modal-close {
@@ -540,7 +540,7 @@
     .drop-zone {
       border: 2px dashed var(--border);
       border-radius: var(--radius-lg);
-      padding: 40px 24px;
+      padding: 20px 16px;
       text-align: center;
       cursor: pointer;
       transition: border-color var(--transition), background var(--transition);
@@ -563,12 +563,12 @@
     }
 
     .drop-icon {
-      margin-bottom: 12px;
+      margin-bottom: 6px;
     }
 
     .drop-icon svg {
-      width: 36px;
-      height: 36px;
+      width: 30px;
+      height: 30px;
       stroke: #555;
       fill: none;
       stroke-width: 1.5;
@@ -577,26 +577,26 @@
     }
 
     .drop-label {
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       font-weight: 500;
       color: var(--text);
     }
 
     .drop-hint {
-      font-size: 0.78rem;
+      font-size: 0.76rem;
       color: var(--text-muted);
-      margin-top: 6px;
+      margin-top: 4px;
     }
 
     /* File preview */
     .file-preview {
       display: none;
       align-items: center;
-      gap: 14px;
+      gap: 12px;
       background: var(--surface2);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 14px 16px;
+      padding: 8px 12px;
     }
 
     .file-preview.visible {
@@ -685,7 +685,7 @@
     .publish-section {
       display: none;
       flex-direction: column;
-      gap: 12px;
+      gap: 4px;
     }
 
     .publish-section.visible {
@@ -693,10 +693,10 @@
     }
 
     .input-label {
-      font-size: 0.82rem;
+      font-size: 0.78rem;
       font-weight: 500;
       color: var(--text-muted);
-      margin-bottom: 2px;
+      margin-bottom: 1px;
     }
 
     .text-input {
@@ -705,9 +705,9 @@
       border-radius: var(--radius);
       color: var(--input-text);
       font-family: 'Inter', monospace;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       font-weight: 500;
-      padding: 12px 16px;
+      padding: 9px 12px;
       outline: none;
       width: 100%;
       transition: border-color var(--transition);
@@ -723,9 +723,10 @@
     }
 
     .url-preview {
-      font-size: 0.78rem;
+      font-size: 0.75rem;
       color: var(--text-dim);
       font-family: monospace;
+      margin-top: 1px;
     }
 
     .url-preview span {
@@ -1009,12 +1010,12 @@
     .view-mode-wrap {
       display: none;
       flex-direction: column;
-      gap: 8px;
+      gap: 4px;
     }
     .view-mode-wrap.visible { display: flex; }
 
     .view-mode-label {
-      font-size: 0.78rem;
+      font-size: 0.76rem;
       font-weight: 600;
       color: var(--text-muted);
       text-transform: uppercase;
@@ -1030,8 +1031,8 @@
 
     .view-pill {
       flex: 1;
-      padding: 9px 12px;
-      font-size: 0.82rem;
+      padding: 7px 10px;
+      font-size: 0.8rem;
       font-weight: 500;
       font-family: inherit;
       background: var(--surface2);
@@ -1057,24 +1058,89 @@
     }
 
     .view-mode-hint {
-      font-size: 0.76rem;
+      font-size: 0.74rem;
       color: var(--text-dim);
-      line-height: 1.5;
+      line-height: 1.4;
     }
 
-    /* ── Restricted Viewer Protection & Custom Canvas Viewer ── */
-    .restricted-header-badge {
+    /* ── Restricted Viewer Black Lock Button & Tooltip ── */
+    .restricted-lock-wrap {
+      position: relative;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 5px 12px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      letter-spacing: 0.03em;
-      border-radius: 999px;
-      background: rgba(239, 68, 68, 0.12);
-      color: #ef4444;
-      border: 1px solid rgba(239, 68, 68, 0.28);
+    }
+    .restricted-lock-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--surface2);
+      border: 1.5px solid var(--border);
+      color: var(--text);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background var(--transition), color var(--transition), transform 0.15s ease;
+      padding: 0;
+    }
+    .restricted-lock-btn:hover,
+    .restricted-lock-wrap.active .restricted-lock-btn {
+      background: var(--text);
+      color: var(--bg);
+      transform: scale(1.06);
+    }
+    .restricted-lock-btn svg {
+      width: 16px;
+      height: 16px;
+      stroke-width: 2.2;
+    }
+    .restricted-tooltip {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      width: 220px;
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 9px 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+      font-size: 0.78rem;
+      line-height: 1.4;
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(-4px);
+      transition: opacity 0.18s ease, transform 0.18s ease;
+      z-index: 100;
+      text-align: left;
+    }
+    .restricted-tooltip::before {
+      content: '';
+      position: absolute;
+      bottom: 100%;
+      right: 11px;
+      border-width: 5px;
+      border-style: solid;
+      border-color: transparent transparent var(--border) transparent;
+    }
+    .restricted-lock-wrap:hover .restricted-tooltip,
+    .restricted-lock-wrap.active .restricted-tooltip {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+    .restricted-tooltip-title {
+      font-weight: 700;
+      font-size: 0.82rem;
+      margin-bottom: 2px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--text);
+    }
+    .restricted-tooltip-desc {
+      color: var(--text-muted);
+      font-size: 0.74rem;
     }
     body.restricted-mode #viewerScreen,
     body.restricted-mode #viewerScreen * {
@@ -1341,9 +1407,20 @@
         <img class="viewer-logo-mark" src="icon.png" alt="" />
         <span>DONT<span class="brand-c">C</span>BOARD</span>
       </div>
-      <div class="restricted-header-badge" id="restrictedBadge" style="display:none;">
-        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        <span>Restricted View (No Copy)</span>
+      <div class="restricted-lock-wrap" id="restrictedBadge" style="display:none;" role="button" tabindex="0" aria-label="Restricted file notification">
+        <button class="restricted-lock-btn" id="restrictedLockBtn" type="button" aria-label="Restricted file info">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        </button>
+        <div class="restricted-tooltip" id="restrictedTooltip" role="tooltip">
+          <div class="restricted-tooltip-title">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            This file is restricted
+          </div>
+          <div class="restricted-tooltip-desc">Copying, text selection, downloading, and printing are disabled.</div>
+        </div>
       </div>
     </div>
 
@@ -1656,6 +1733,20 @@
     document.getElementById('pageNameInput').addEventListener('keydown', e => e.key === 'Enter' && gotoPage());
     document.getElementById('goHomeLink').addEventListener('click', goHome);
     document.getElementById('viewerLogoLink').addEventListener('click', goHome);
+
+    // Restricted lock tooltip click toggle
+    const restrictedBadgeEl = document.getElementById('restrictedBadge');
+    if (restrictedBadgeEl) {
+      restrictedBadgeEl.addEventListener('click', (e) => {
+        e.stopPropagation();
+        restrictedBadgeEl.classList.toggle('active');
+      });
+    }
+    document.addEventListener('click', (e) => {
+      if (restrictedBadgeEl && !restrictedBadgeEl.contains(e.target)) {
+        restrictedBadgeEl.classList.remove('active');
+      }
+    });
 
     function gotoPage() {
       const v = document.getElementById('pageNameInput').value.trim();
