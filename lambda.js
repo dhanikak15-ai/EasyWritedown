@@ -79,6 +79,7 @@ exports.handler = async (event) => {
           fileName: item.fileName,
           fileType: item.fileType,
           fileSize: item.fileSize,
+          viewMode: item.viewMode || 'normal',
           createdAt: item.createdAt
         })
       };
@@ -101,7 +102,7 @@ exports.handler = async (event) => {
       }
 
       const parsed = typeof bodyStr === 'string' ? JSON.parse(bodyStr || '{}') : (bodyStr || {});
-      const { pageName, fileName, fileType, fileSize, contentType } = parsed;
+      const { pageName, fileName, fileType, fileSize, contentType, viewMode } = parsed;
 
       if (!pageName || !fileName || !fileType) {
         return {
@@ -161,6 +162,7 @@ exports.handler = async (event) => {
         fileName,
         fileType: cleanExt,
         fileSize: fileSize || 0,
+        viewMode: viewMode || 'normal',
         s3Key,
         contentType: detectedContentType,
         createdAt: new Date().toISOString()
