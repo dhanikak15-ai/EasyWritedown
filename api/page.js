@@ -42,13 +42,10 @@ module.exports = async function handler(req, res) {
 
     const item = result.Item;
 
-    // Generate pre-signed S3 GET URL (valid for 1 hour)
-    const getCommand = new GetObjectCommand({
-      Bucket: BUCKET,
-      Key: item.s3Key
-    });
-
-    const fileUrl = await getSignedUrl(s3Client, getCommand, { expiresIn: 3600 });
+    // Use clean CDN URL on dontcboard.me for public reading (Office Viewer, Google Docs Viewer)
+    const fileUrl = (item.s3Key && item.s3Key.startsWith('uploads/'))
+      ? `https://dontcboard.me/${item.s3Key}`
+      : await getSignedUrl(s3Client, getCommand, { expiresIn: 3600 });
 
     return res.status(200).json({
       exists: true,

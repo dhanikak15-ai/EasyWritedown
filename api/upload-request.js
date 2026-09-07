@@ -46,12 +46,20 @@ module.exports = async function handler(req, res) {
     }
 
     const cleanExt = fileType.toLowerCase().replace(/^\./, '');
-    if (!['pdf', 'ppt', 'pptx'].includes(cleanExt)) {
-      return res.status(400).json({ error: 'Only PDF and PowerPoint files are allowed' });
+    const ALLOWED_EXTENSIONS = ['pdf', 'ppt', 'pptx', 'doc', 'docx'];
+    if (!ALLOWED_EXTENSIONS.includes(cleanExt)) {
+      return res.status(400).json({ error: 'Only PDF, Word (.doc, .docx), and PowerPoint (.ppt, .pptx) files are allowed' });
     }
 
     const s3Key = `uploads/${cleanSlug}-${Date.now()}.${cleanExt}`;
-    const detectedContentType = contentType || (cleanExt === 'pdf' ? 'application/pdf' : 'application/vnd.ms-powerpoint');
+    const MIME_MAP = {
+      pdf: 'application/pdf',
+      docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      doc: 'application/msword',
+      pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      ppt: 'application/vnd.ms-powerpoint'
+    };
+    const detectedContentType = contentType || MIME_MAP[cleanExt] || 'application/octet-stream';
 
     const putCommand = new PutObjectCommand({
       Bucket: BUCKET,

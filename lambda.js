@@ -65,7 +65,9 @@ exports.handler = async (event) => {
         Key: item.s3Key
       });
 
-      const fileUrl = await getSignedUrl(s3Client, getCommand, { expiresIn: 3600 });
+      const fileUrl = (item.s3Key && item.s3Key.startsWith('uploads/'))
+        ? `https://dontcboard.me/${item.s3Key}`
+        : await getSignedUrl(s3Client, getCommand, { expiresIn: 3600 });
 
       return {
         statusCode: 200,
@@ -127,16 +129,24 @@ exports.handler = async (event) => {
       }
 
       const cleanExt = fileType.toLowerCase().replace(/^\./, '');
-      if (!['pdf', 'ppt', 'pptx'].includes(cleanExt)) {
+      const ALLOWED_EXTENSIONS = ['pdf', 'ppt', 'pptx', 'doc', 'docx'];
+      if (!ALLOWED_EXTENSIONS.includes(cleanExt)) {
         return {
           statusCode: 400,
           headers: CORS_HEADERS,
-          body: JSON.stringify({ error: 'Only PDF and PowerPoint files are allowed' })
+          body: JSON.stringify({ error: 'Only PDF, Word (.doc, .docx), and PowerPoint (.ppt, .pptx) files are allowed' })
         };
       }
 
       const s3Key = `uploads/${cleanSlug}-${Date.now()}.${cleanExt}`;
-      const detectedContentType = contentType || (cleanExt === 'pdf' ? 'application/pdf' : 'application/vnd.ms-powerpoint');
+      const MIME_MAP = {
+        pdf: 'application/pdf',
+        docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        doc: 'application/msword',
+        pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        ppt: 'application/vnd.ms-powerpoint'
+      };
+      const detectedContentType = contentType || MIME_MAP[cleanExt] || 'application/octet-stream';
 
       const putCommand = new PutObjectCommand({
         Bucket: BUCKET,

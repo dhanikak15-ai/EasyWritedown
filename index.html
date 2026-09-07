@@ -618,10 +618,52 @@
     }
 
     .badge-pdf,
-    .badge-ppt {
+    .badge-ppt,
+    .badge-doc {
       background: var(--icon-bg);
       color: var(--text);
       border: 1.5px solid var(--icon-border);
+    }
+
+    .doc-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+      width: 100%;
+      max-width: 960px;
+      padding: 10px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      flex-wrap: wrap;
+    }
+
+    .doc-toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .doc-toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-sm {
+      padding: 6px 14px;
+      font-size: 0.82rem;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+      cursor: pointer;
+      font-weight: 500;
     }
 
     .file-name {
@@ -1044,13 +1086,13 @@
       <div class="modal-header">
         <div>
           <div class="modal-title" id="modalTitle">Upload Document</div>
-          <div class="modal-sub">PDF or PowerPoint files only (max 100 MB)</div>
+          <div class="modal-sub">PDF, Word, or PowerPoint files (max 100 MB)</div>
         </div>
         <button class="modal-close" id="modalClose" aria-label="Close">&#x2715;</button>
       </div>
 
       <div class="drop-zone" id="dropZone">
-        <input type="file" id="fileInput" accept=".pdf,.ppt,.pptx" />
+        <input type="file" id="fileInput" accept=".pdf,.ppt,.pptx,.doc,.docx" />
         <div class="drop-icon">
           <svg viewBox="0 0 24 24">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -1060,7 +1102,7 @@
           </svg>
         </div>
         <div class="drop-label">Drop your file here</div>
-        <div class="drop-hint">or click to browse — .pdf, .ppt, .pptx accepted (max 100 MB)</div>
+        <div class="drop-hint">or click to browse — .pdf, .docx, .doc, .pptx, .ppt accepted (max 100 MB)</div>
       </div>
 
       <div class="file-preview" id="filePreview">
@@ -1464,7 +1506,10 @@
 
     function handleFile(file) {
       const ext = file.name.split('.').pop().toLowerCase();
-      if (!['pdf', 'ppt', 'pptx'].includes(ext)) { setStatus('Only PDF and PowerPoint files are allowed.', true); return; }
+      if (!['pdf', 'ppt', 'pptx', 'doc', 'docx'].includes(ext)) {
+        setStatus('Only PDF, Word (.doc, .docx), and PowerPoint (.ppt, .pptx) files are allowed.', true);
+        return;
+      }
       if (file.size > 100 * 1024 * 1024) {
         setStatus('File size exceeds the 100 MB limit. Please select a smaller file.', true);
         fileInput.value = '';
@@ -1473,7 +1518,10 @@
       selectedFile = file;
       setStatus('', false);
       fileBadge.textContent = ext.toUpperCase();
-      fileBadge.className = 'file-type-badge ' + (ext === 'pdf' ? 'badge-pdf' : 'badge-ppt');
+      let badgeClass = 'badge-ppt';
+      if (ext === 'pdf') badgeClass = 'badge-pdf';
+      else if (ext === 'doc' || ext === 'docx') badgeClass = 'badge-doc';
+      fileBadge.className = 'file-type-badge ' + badgeClass;
       fileNameEl.textContent = file.name;
       fileSizeEl.textContent = fmtBytes(file.size);
       filePreview.classList.add('visible');
@@ -1655,7 +1703,7 @@
       if (data.fileType === 'pdf') {
         await renderPDF(data.fileUrl || data.fileData);
       } else {
-        await renderPPT(data.fileUrl || data.fileData, data.fileType);
+        await renderOfficeDoc(data.fileUrl || data.fileData, data.fileType, data.fileName);
       }
     }
 
@@ -1696,8 +1744,9 @@
       }
     }
 
-    async function renderPPT(source, ext) {
-      setViewerLoading('Opening your presentation', 'Loading the first slide');
+    async function renderOfficeDoc(source, ext, fileName) {
+      const isWord = ext === 'doc' || ext === 'docx';
+      setViewerLoading(isWord ? 'Opening your document' : 'Opening your presentation', 'Preparing the viewer…');
       pptContainer.style.display = 'flex';
       pptPages.innerHTML = '';
 
@@ -1706,8 +1755,9 @@
         rawUrl = source;
       } else {
         const buf = typeof source === 'string' ? b642ab(source) : source;
-        const mime = ext === 'pptx'
-          ? 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+        const mime = ext === 'pptx' ? 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+          : ext === 'docx' ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+          : ext === 'doc' ? 'application/msword'
           : 'application/vnd.ms-powerpoint';
         const blob = new Blob([buf], { type: mime });
         rawUrl = URL.createObjectURL(blob);
@@ -1716,25 +1766,96 @@
       const wrap = document.createElement('div');
       wrap.className = 'ppt-iframe-wrap';
 
-      const iframe = document.createElement('iframe');
-      // If hosted online, use Microsoft Office Online Viewer or Google Viewer for full slide presentation
+      // Toolbar with Doc Info, Switch Viewer button, and Download button
+      const toolbar = document.createElement('div');
+      toolbar.className = 'doc-toolbar';
+
+      const toolbarLeft = document.createElement('div');
+      toolbarLeft.className = 'doc-toolbar-left';
+      toolbarLeft.innerHTML = `
+        <span class="file-type-badge ${isWord ? 'badge-doc' : 'badge-ppt'}">${ext.toUpperCase()}</span>
+        <span class="doc-title" style="font-size:0.85rem; font-weight:600; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:320px;">${fileName || 'Document'}</span>
+      `;
+
+      const toolbarRight = document.createElement('div');
+      toolbarRight.className = 'doc-toolbar-right';
+
+      let currentProvider = (rawUrl.startsWith('http://') || rawUrl.startsWith('https://')) ? 'google' : 'local';
+
+      const switchBtn = document.createElement('button');
+      switchBtn.className = 'btn-sm btn-outline';
+      switchBtn.id = 'switchViewerBtn';
+      switchBtn.innerHTML = `
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 16V4m0 0L3 8m4-4l4 4m6 4v12m0 0l4-4m-4 4l-4-4"/></svg>
+        <span id="providerLabel">Switch to Office Viewer</span>
+      `;
+
+      const downloadBtn = document.createElement('a');
+      downloadBtn.className = 'btn-sm btn-white';
+      downloadBtn.href = rawUrl;
+      downloadBtn.target = '_blank';
+      downloadBtn.download = fileName || `document.${ext}`;
+      downloadBtn.innerHTML = `
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download
+      `;
+
       if (rawUrl.startsWith('http://') || rawUrl.startsWith('https://')) {
-        iframe.src = 'https://view.officeapps.live.com/op/embed.aspx?src=' + encodeURIComponent(rawUrl);
-        iframe.onerror = () => {
-          iframe.src = 'https://docs.google.com/viewer?url=' + encodeURIComponent(rawUrl) + '&embedded=true';
-        };
-      } else {
-        iframe.src = rawUrl;
+        toolbarRight.appendChild(switchBtn);
+      }
+      toolbarRight.appendChild(downloadBtn);
+      toolbar.appendChild(toolbarLeft);
+      toolbar.appendChild(toolbarRight);
+      wrap.appendChild(toolbar);
+
+      const contentBox = document.createElement('div');
+      contentBox.id = 'docContentBox';
+      contentBox.style.width = '100%';
+      wrap.appendChild(contentBox);
+
+      function loadIframe(provider) {
+        contentBox.innerHTML = '';
+        const iframe = document.createElement('iframe');
+        iframe.setAttribute('allowfullscreen', 'true');
+        iframe.setAttribute('title', isWord ? 'Word Document Viewer' : 'PowerPoint Presentation Viewer');
+        iframe.style.width = '100%';
+        iframe.style.height = '82vh';
+        iframe.style.minHeight = '540px';
+        iframe.style.border = '1px solid var(--border)';
+        iframe.style.borderRadius = 'var(--radius-lg)';
+        iframe.style.background = 'var(--surface)';
+
+        let src = '';
+        if (rawUrl.startsWith('http://') || rawUrl.startsWith('https://')) {
+          if (provider === 'google') {
+            src = 'https://docs.google.com/viewer?url=' + encodeURIComponent(rawUrl) + '&embedded=true';
+            const lbl = document.getElementById('providerLabel');
+            if (lbl) lbl.textContent = 'Switch to Office Viewer';
+          } else {
+            src = 'https://view.officeapps.live.com/op/embed.aspx?src=' + encodeURIComponent(rawUrl);
+            const lbl = document.getElementById('providerLabel');
+            if (lbl) lbl.textContent = 'Switch to Google Viewer';
+          }
+        } else {
+          src = rawUrl;
+        }
+
+        iframe.src = src;
+        iframe.addEventListener('load', () => {
+          viewerLoading.style.display = 'none';
+        }, { once: true });
+
+        contentBox.appendChild(iframe);
       }
 
-      iframe.setAttribute('allowfullscreen', 'true');
-      iframe.setAttribute('title', 'PowerPoint Presentation Viewer');
-      iframe.addEventListener('load', () => {
-        viewerLoading.style.display = 'none';
-      }, { once: true });
+      switchBtn.addEventListener('click', () => {
+        currentProvider = currentProvider === 'google' ? 'office' : 'google';
+        setViewerLoading('Switching viewer', currentProvider === 'google' ? 'Loading Google Docs Viewer…' : 'Loading Microsoft Office Viewer…');
+        loadIframe(currentProvider);
+      });
 
-      wrap.appendChild(iframe);
       pptPages.appendChild(wrap);
+      loadIframe(currentProvider);
     }
 
     function blockShortcuts(e) {
