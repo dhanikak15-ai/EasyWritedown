@@ -54,6 +54,7 @@ module.exports = async function handler(req, res) {
       fileName: item.fileName,
       fileType: item.fileType,
       fileSize: item.fileSize,
+      viewMode: item.viewMode || 'normal',
       createdAt: item.createdAt
     });
   } catch (err) {

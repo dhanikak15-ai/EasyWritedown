@@ -1008,6 +1008,88 @@
       box-shadow: var(--shadow);
     }
 
+    /* ── View Mode Selector ─────────────────────────────── */
+    .view-mode-wrap {
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .view-mode-wrap.visible { display: flex; }
+
+    .view-mode-label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .view-mode-pills {
+      display: flex;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .view-pill {
+      flex: 1;
+      padding: 9px 12px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      font-family: inherit;
+      background: var(--surface2);
+      color: var(--text-muted);
+      border: none;
+      cursor: pointer;
+      transition: background var(--transition), color var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .view-pill + .view-pill {
+      border-left: 1px solid var(--border);
+    }
+    .view-pill.active {
+      background: var(--text);
+      color: var(--bg);
+    }
+    .view-pill:hover:not(.active) {
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    .view-mode-hint {
+      font-size: 0.76rem;
+      color: var(--text-dim);
+      line-height: 1.5;
+    }
+
+    /* ── Restricted Viewer Protection ─────────────────────────── */
+    body.restricted-mode #viewerScreen,
+    body.restricted-mode #viewerScreen * {
+      user-select: none !important;
+      -webkit-user-select: none !important;
+      -webkit-user-drag: none !important;
+    }
+    body.restricted-mode #viewerScreen *::selection {
+      background: transparent !important;
+    }
+    body.restricted-mode .page-canvas {
+      pointer-events: none;
+    }
+    /* Transparent shield over iframe in restricted mode */
+    .iframe-shield {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      background: transparent;
+      cursor: default;
+    }
+    @media print {
+      body.restricted-mode #viewerScreen { display: none !important; }
+    }
+
     @media (max-width: 500px) {
       #homeScreen {
         padding: 72px 16px 16px;
@@ -1120,6 +1202,22 @@
         <input type="text" class="text-input" id="publishPageName" placeholder="e.g. my-report-2024" autocomplete="off"
           spellcheck="false" />
         <div class="url-preview">dontcboard.me/<span id="urlPreviewSlug">your-page-name</span></div>
+      </div>
+
+      <!-- View Mode Selector -->
+      <div class="view-mode-wrap" id="viewModeWrap">
+        <div class="view-mode-label">View mode</div>
+        <div class="view-mode-pills" role="group" aria-label="View mode">
+          <button class="view-pill active" id="modeNormal" data-mode="normal" type="button">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            Normal View
+          </button>
+          <button class="view-pill" id="modeRestricted" data-mode="restricted" type="button">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Restricted View
+          </button>
+        </div>
+        <div class="view-mode-hint" id="viewModeHint">Viewers can open and copy the document freely.</div>
       </div>
 
       <div class="progress-bar-wrap" id="progressWrap">
@@ -1473,6 +1571,7 @@
     const modalActions = document.getElementById('modalActions');
 
     let selectedFile = null;
+    let selectedViewMode = 'normal';
 
     document.getElementById('modalClose').addEventListener('click', closeModal);
     document.getElementById('cancelBtn').addEventListener('click', closeModal);
@@ -1488,11 +1587,31 @@
     }
     function closeModal() { uploadModal.classList.remove('open'); }
 
+    const viewModeWrap = document.getElementById('viewModeWrap');
+    const viewModeHint = document.getElementById('viewModeHint');
+    const viewPills = document.querySelectorAll('.view-pill');
+
+    viewPills.forEach(pill => {
+      pill.addEventListener('click', () => {
+        viewPills.forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        selectedViewMode = pill.dataset.mode;
+        viewModeHint.textContent = selectedViewMode === 'restricted'
+          ? 'Viewers cannot copy, download, or print the document.'
+          : 'Viewers can open and copy the document freely.';
+      });
+    });
+
     function resetModal() {
       selectedFile = null;
+      selectedViewMode = 'normal';
       fileInput.value = '';
       filePreview.classList.remove('visible');
       publishSection.classList.remove('visible');
+      viewModeWrap.classList.remove('visible');
+      viewPills.forEach(p => p.classList.remove('active'));
+      document.getElementById('modeNormal').classList.add('active');
+      viewModeHint.textContent = 'Viewers can open and copy the document freely.';
       publishPageName.value = '';
       urlPreviewSlug.textContent = 'your-page-name';
       publishBtn.disabled = true;
@@ -1530,6 +1649,7 @@
       fileSizeEl.textContent = fmtBytes(file.size);
       filePreview.classList.add('visible');
       publishSection.classList.add('visible');
+      viewModeWrap.classList.add('visible');
       publishBtn.disabled = false;
     }
 
@@ -1550,7 +1670,7 @@
       }
     }
 
-    async function uploadToCloud(pageName, file, onProgress) {
+    async function uploadToCloud(pageName, file, onProgress, viewMode) {
       const ext = file.name.split('.').pop().toLowerCase();
       // 1. Request pre-signed S3 upload URL from server
       const reqRes = await fetch('/api/upload-request', {
@@ -1561,7 +1681,8 @@
           fileName: file.name,
           fileType: ext,
           fileSize: file.size,
-          contentType: file.type || (ext === 'pdf' ? 'application/pdf' : 'application/vnd.ms-powerpoint')
+          contentType: file.type || (ext === 'pdf' ? 'application/pdf' : 'application/vnd.ms-powerpoint'),
+          viewMode: viewMode || 'normal'
         })
       });
 
@@ -1614,7 +1735,7 @@
         try {
           await uploadToCloud(pageName, selectedFile, p => {
             progressBar.style.width = Math.round(p * 90) + '%';
-          });
+          }, selectedViewMode);
           uploadedToCloud = true;
         } catch (cloudErr) {
           console.warn('Cloud upload failed, saving locally:', cloudErr);
@@ -1700,14 +1821,16 @@
         return;
       }
 
-      // Block copy/print shortcuts globally while viewer is open
-      document.addEventListener('keydown', blockShortcuts, true);
-      document.addEventListener('contextmenu', blockContext, true);
+      // Apply protection only when viewMode is 'restricted'
+      const viewMode = data.viewMode || 'normal';
+      if (viewMode === 'restricted') {
+        activateRestrictedMode();
+      }
 
       if (data.fileType === 'pdf') {
-        await renderPDF(data.fileUrl || data.fileData);
+        await renderPDF(data.fileUrl || data.fileData, viewMode);
       } else {
-        await renderOfficeDoc(data.fileUrl || data.fileData, data.fileType, data.fileName);
+        await renderOfficeDoc(data.fileUrl || data.fileData, data.fileType, data.fileName, viewMode);
       }
     }
 
@@ -1794,20 +1917,23 @@
         <span id="providerLabel">Switch to Office Viewer</span>
       `;
 
-      const downloadBtn = document.createElement('a');
-      downloadBtn.className = 'btn-sm btn-white';
-      downloadBtn.href = rawUrl;
-      downloadBtn.target = '_blank';
-      downloadBtn.download = fileName || `document.${ext}`;
-      downloadBtn.innerHTML = `
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Download
-      `;
+      // Download button — only shown in Normal mode
+      if (viewMode !== 'restricted') {
+        const downloadBtn = document.createElement('a');
+        downloadBtn.className = 'btn-sm btn-white';
+        downloadBtn.href = rawUrl;
+        downloadBtn.target = '_blank';
+        downloadBtn.download = fileName || `document.${ext}`;
+        downloadBtn.innerHTML = `
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download
+        `;
+        toolbarRight.appendChild(downloadBtn);
+      }
 
       if (rawUrl.startsWith('http://') || rawUrl.startsWith('https://')) {
         toolbarRight.appendChild(switchBtn);
       }
-      toolbarRight.appendChild(downloadBtn);
       toolbar.appendChild(toolbarLeft);
       toolbar.appendChild(toolbarRight);
       wrap.appendChild(toolbar);
@@ -1815,6 +1941,7 @@
       const contentBox = document.createElement('div');
       contentBox.id = 'docContentBox';
       contentBox.style.width = '100%';
+      contentBox.style.position = 'relative';
       wrap.appendChild(contentBox);
 
       function loadIframe(provider) {
@@ -1850,6 +1977,15 @@
         }, { once: true });
 
         contentBox.appendChild(iframe);
+
+        // In restricted mode, place a transparent shield over the iframe
+        // to block right-click and drag interactions from reaching it
+        if (viewMode === 'restricted') {
+          const shield = document.createElement('div');
+          shield.className = 'iframe-shield';
+          shield.addEventListener('contextmenu', e => e.preventDefault());
+          contentBox.appendChild(shield);
+        }
       }
 
       switchBtn.addEventListener('click', () => {
@@ -1862,14 +1998,35 @@
       loadIframe(currentProvider);
     }
 
-    function blockShortcuts(e) {
-      if ((e.ctrlKey || e.metaKey) && ['c', 'a', 's', 'p', 'u'].includes(e.key.toLowerCase())) {
-        e.preventDefault();
-        e.stopPropagation();
-        return false;
-      }
+    // ── Restricted Mode Protection Engine ────────────────────
+    let _restrictedActive = false;
+
+    function activateRestrictedMode() {
+      if (_restrictedActive) return;
+      _restrictedActive = true;
+      document.body.classList.add('restricted-mode');
+      document.addEventListener('keydown', blockShortcuts, true);
+      document.addEventListener('contextmenu', blockContext, true);
+      document.addEventListener('copy', e => { e.preventDefault(); }, true);
+      document.addEventListener('cut', e => { e.preventDefault(); }, true);
+      window.addEventListener('beforeprint', () => {
+        document.body.style.visibility = 'hidden';
+        setTimeout(() => { document.body.style.visibility = ''; }, 2000);
+      });
     }
-    function blockContext(e) { e.preventDefault(); }
+
+    function blockShortcuts(e) {
+      const key = e.key.toLowerCase();
+      const ctrl = e.ctrlKey || e.metaKey;
+      if (ctrl && ['c', 'a', 's', 'p', 'u'].includes(key)) {
+        e.preventDefault(); e.stopPropagation(); return false;
+      }
+      if (ctrl && e.shiftKey && ['i', 'j'].includes(key)) {
+        e.preventDefault(); e.stopPropagation(); return false;
+      }
+      if (e.key === 'F12') { e.preventDefault(); e.stopPropagation(); return false; }
+    }
+    function blockContext(e) { e.preventDefault(); e.stopPropagation(); }
 
     // ── Utils ─────────────────────────────────────────────────────
     function slugify(s) {

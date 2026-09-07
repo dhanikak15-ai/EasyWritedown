@@ -29,7 +29,7 @@ module.exports = async function handler(req, res) {
       try { body = JSON.parse(body); } catch (e) {}
     }
 
-    const { pageName, fileName, fileType, fileSize, contentType } = body || {};
+    const { pageName, fileName, fileType, fileSize, contentType, viewMode } = body || {};
 
     if (!pageName || !fileName || !fileType) {
       return res.status(400).json({ error: 'Missing required fields: pageName, fileName, fileType' });
@@ -76,6 +76,7 @@ module.exports = async function handler(req, res) {
       fileSize: fileSize || 0,
       s3Key,
       contentType: detectedContentType,
+      viewMode: viewMode === 'restricted' ? 'restricted' : 'normal',
       createdAt: new Date().toISOString()
     };
 
