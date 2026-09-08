@@ -233,6 +233,8 @@ Check the region, access key, secret key, IAM permissions, and deployment enviro
 
 ## License
 
-No license has been declared yet. Open-source - anyone can use the code but with their specified/created credentials.
+This project is open-source and available under the [MIT License](LICENSE). Anyone can freely use, modify, and distribute the code, provided that the original copyright notice and permission notice are included. 
+
+*Note: Users must set up and use their own AWS credentials and environment variables (`.env`) to run the infrastructure.*
 
 ## Built by DK 
