@@ -837,19 +837,30 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 40px 20px 60px;
+      padding: 40px 20px 80px;
       gap: 12px;
       user-select: none;
       -webkit-user-select: none;
+      width: 100%;
+      box-sizing: border-box;
+      overflow-x: auto;
     }
 
     .viewer-body-scroll {
-      pointer-events: none;
+      pointer-events: auto;
       width: 100%;
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 16px;
+      zoom: var(--doc-zoom, 1);
+      transform-origin: top center;
+    }
+
+    @supports not (zoom: 1) {
+      .viewer-body-scroll {
+        transform: scale(var(--doc-zoom, 1));
+      }
     }
 
     #pdfContainer .viewer-body-scroll {
@@ -1320,8 +1331,103 @@
       box-shadow: none !important;
       margin-bottom: 20px !important;
     }
+
+    /* ── Floating Document Zoom Controls ─────────────────── */
+    .viewer-zoom-dock {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 150;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 4px 6px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.24);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      user-select: none;
+      transition: opacity 0.2s ease, transform 0.2s ease, background var(--transition);
+      animation: zoomDockSlideUp 0.3s ease-out;
+      pointer-events: auto !important;
+    }
+
+    body.restricted-mode .viewer-zoom-dock,
+    body.restricted-mode .viewer-zoom-dock * {
+      pointer-events: auto !important;
+      cursor: pointer !important;
+    }
+
+    @keyframes zoomDockSlideUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .zoom-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: none;
+      background: transparent;
+      color: var(--text);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background 0.15s ease, transform 0.1s ease, color 0.15s ease;
+      padding: 0;
+    }
+
+    .zoom-btn:hover {
+      background: var(--surface2);
+      color: var(--text);
+    }
+
+    .zoom-btn:active {
+      transform: scale(0.92);
+    }
+
+    .zoom-btn:disabled {
+      opacity: 0.32;
+      cursor: not-allowed !important;
+      transform: none;
+    }
+
+    .zoom-level-btn {
+      padding: 0 8px;
+      height: 32px;
+      border-radius: 6px;
+      border: none;
+      background: transparent;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 52px;
+      transition: background 0.15s ease;
+    }
+
+    .zoom-level-btn:hover {
+      background: var(--surface2);
+    }
+
+    .zoom-divider {
+      width: 1px;
+      height: 18px;
+      background: var(--border);
+      margin: 0 2px;
+    }
+
     @media print {
       body.restricted-mode #viewerScreen { display: none !important; }
+      .viewer-zoom-dock { display: none !important; }
     }
 
     @media (max-width: 500px) {
@@ -1521,6 +1627,23 @@
     <div class="viewer-body" id="pptContainer" style="display:none;">
       <div class="viewer-body-scroll" id="pptPages"></div>
     </div>
+
+    <!-- FLOATING VIEWER ZOOM CONTROLS -->
+    <div class="viewer-zoom-dock" id="viewerZoomDock" style="display:none;" role="toolbar" aria-label="Document zoom controls">
+      <button class="zoom-btn" id="zoomOutBtn" type="button" title="Zoom Out (Ctrl -)" aria-label="Zoom Out">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+      <button class="zoom-level-btn" id="zoomResetBtn" type="button" title="Reset Zoom to 100% (Ctrl 0)" aria-label="Reset zoom">
+        <span id="zoomLevelText">100%</span>
+      </button>
+      <button class="zoom-btn" id="zoomInBtn" type="button" title="Zoom In (Ctrl +)" aria-label="Zoom In">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+      <div class="zoom-divider"></div>
+      <button class="zoom-btn" id="zoomFitBtn" type="button" title="Fit to width" aria-label="Fit to width">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+      </button>
+    </div>
   </div>
 
   <!-- PRIVACY POLICY MODAL -->
@@ -1689,6 +1812,9 @@
       deactivateRestrictedMode();
       const rb = document.getElementById('restrictedBadge');
       if (rb) rb.style.display = 'none';
+      const zd = document.getElementById('viewerZoomDock');
+      if (zd) zd.style.display = 'none';
+      if (typeof resetZoom === 'function') resetZoom();
     }
     function showViewer() {
       homeScreen.style.display = 'none';
@@ -2048,6 +2174,79 @@
     const viewerLoadingTitle = document.getElementById('viewerLoadingTitle');
     const viewerLoadingSubtitle = document.getElementById('viewerLoadingSubtitle');
 
+    // ── Document Zoom Controller ──────────────────────────────────
+    let docZoom = 1.0;
+    const MIN_ZOOM = 0.5;
+    const MAX_ZOOM = 2.5;
+    const ZOOM_STEP = 0.15;
+
+    const viewerZoomDock = document.getElementById('viewerZoomDock');
+    const zoomOutBtn = document.getElementById('zoomOutBtn');
+    const zoomInBtn = document.getElementById('zoomInBtn');
+    const zoomResetBtn = document.getElementById('zoomResetBtn');
+    const zoomFitBtn = document.getElementById('zoomFitBtn');
+    const zoomLevelText = document.getElementById('zoomLevelText');
+
+    function setDocZoom(val) {
+      docZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.round(val * 100) / 100));
+      document.documentElement.style.setProperty('--doc-zoom', docZoom);
+      if (zoomLevelText) zoomLevelText.textContent = Math.round(docZoom * 100) + '%';
+      if (zoomOutBtn) zoomOutBtn.disabled = docZoom <= MIN_ZOOM;
+      if (zoomInBtn) zoomInBtn.disabled = docZoom >= MAX_ZOOM;
+    }
+
+    function zoomIn() {
+      setDocZoom(docZoom + ZOOM_STEP);
+    }
+
+    function zoomOut() {
+      setDocZoom(docZoom - ZOOM_STEP);
+    }
+
+    function resetZoom() {
+      setDocZoom(1.0);
+    }
+
+    function fitZoom() {
+      const isPDF = pdfContainer && pdfContainer.style.display !== 'none';
+      const baseWidth = isPDF ? 860 : 960;
+      const availableWidth = window.innerWidth - (window.innerWidth < 600 ? 32 : 80);
+      const fitRatio = Math.round((availableWidth / baseWidth) * 100) / 100;
+      setDocZoom(Math.min(1.8, Math.max(0.5, fitRatio)));
+    }
+
+    if (zoomInBtn) zoomInBtn.addEventListener('click', zoomIn);
+    if (zoomOutBtn) zoomOutBtn.addEventListener('click', zoomOut);
+    if (zoomResetBtn) zoomResetBtn.addEventListener('click', resetZoom);
+    if (zoomFitBtn) zoomFitBtn.addEventListener('click', fitZoom);
+
+    // Keyboard Shortcuts & Ctrl + Wheel support when viewer is open
+    window.addEventListener('keydown', (e) => {
+      if (viewerScreen && viewerScreen.style.display !== 'none') {
+        if ((e.ctrlKey || e.metaKey) && (e.key === '=' || e.key === '+')) {
+          e.preventDefault();
+          zoomIn();
+        } else if ((e.ctrlKey || e.metaKey) && (e.key === '-' || e.key === '_')) {
+          e.preventDefault();
+          zoomOut();
+        } else if ((e.ctrlKey || e.metaKey) && e.key === '0') {
+          e.preventDefault();
+          resetZoom();
+        }
+      }
+    });
+
+    window.addEventListener('wheel', (e) => {
+      if ((e.ctrlKey || e.metaKey) && viewerScreen && viewerScreen.style.display !== 'none') {
+        e.preventDefault();
+        if (e.deltaY < 0) {
+          zoomIn();
+        } else if (e.deltaY > 0) {
+          zoomOut();
+        }
+      }
+    }, { passive: false });
+
     function setViewerLoading(title, subtitle) {
       viewerLoadingTitle.textContent = title;
       viewerLoadingSubtitle.textContent = subtitle;
@@ -2065,6 +2264,8 @@
       pptContainer.style.display = 'none';
       pdfPages.innerHTML = '';
       pptPages.innerHTML = '';
+      if (viewerZoomDock) viewerZoomDock.style.display = 'none';
+      resetZoom();
 
       // 1. Try Cloud Backend first
       let data = await fetchPageFromCloud(pageName);
@@ -2086,6 +2287,7 @@
 
       if (!data || !data.exists) {
         viewerLoading.style.display = 'none';
+        if (viewerZoomDock) viewerZoomDock.style.display = 'none';
         notFoundMsg.style.display = 'flex';
         const sub = document.getElementById('notFoundSubtext');
         if (sub) sub.textContent = `No document has been published at "/${pageName}" yet.`;
@@ -2103,6 +2305,8 @@
         deactivateRestrictedMode();
         if (restrictedBadge) restrictedBadge.style.display = 'none';
       }
+
+      if (viewerZoomDock) viewerZoomDock.style.display = 'inline-flex';
 
       try {
         if (data.fileType === 'pdf') {
