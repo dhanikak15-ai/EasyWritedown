@@ -1332,11 +1332,28 @@
       margin-bottom: 20px !important;
     }
 
-    /* ── Floating Document Zoom Controls ─────────────────── */
+    .viewer-header {
+      padding: 14px 32px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      z-index: 100;
+      min-height: 62px;
+      box-sizing: border-box;
+    }
+
+    /* ── Top Center Document Zoom Controls ─────────────────── */
     .viewer-zoom-dock {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
       z-index: 150;
       display: inline-flex;
       align-items: center;
@@ -1344,13 +1361,12 @@
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 999px;
-      padding: 4px 6px;
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.24);
+      padding: 3px 6px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       user-select: none;
       transition: opacity 0.2s ease, transform 0.2s ease, background var(--transition);
-      animation: zoomDockSlideUp 0.3s ease-out;
       pointer-events: auto !important;
     }
 
@@ -1360,14 +1376,9 @@
       cursor: pointer !important;
     }
 
-    @keyframes zoomDockSlideUp {
-      from { opacity: 0; transform: translateY(12px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
     .zoom-btn {
-      width: 32px;
-      height: 32px;
+      width: 30px;
+      height: 30px;
       border-radius: 50%;
       border: none;
       background: transparent;
@@ -1398,19 +1409,19 @@
 
     .zoom-level-btn {
       padding: 0 8px;
-      height: 32px;
+      height: 30px;
       border-radius: 6px;
       border: none;
       background: transparent;
       color: var(--text);
       font-family: inherit;
-      font-size: 0.82rem;
+      font-size: 0.8rem;
       font-weight: 600;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-width: 52px;
+      min-width: 48px;
       transition: background 0.15s ease;
     }
 
@@ -1420,7 +1431,7 @@
 
     .zoom-divider {
       width: 1px;
-      height: 18px;
+      height: 16px;
       background: var(--border);
       margin: 0 2px;
     }
@@ -1428,6 +1439,26 @@
     @media print {
       body.restricted-mode #viewerScreen { display: none !important; }
       .viewer-zoom-dock { display: none !important; }
+    }
+
+    @media (max-width: 600px) {
+      .viewer-header {
+        padding: 12px 16px;
+      }
+      .viewer-zoom-dock {
+        padding: 2px 4px;
+        gap: 2px;
+      }
+      .zoom-btn {
+        width: 26px;
+        height: 26px;
+      }
+      .zoom-level-btn {
+        min-width: 42px;
+        font-size: 0.74rem;
+        padding: 0 4px;
+        height: 26px;
+      }
     }
 
     @media (max-width: 500px) {
@@ -1585,6 +1616,24 @@
         <img class="viewer-logo-mark" src="icon.png" alt="" />
         <span>DONT<span class="brand-c">C</span>BOARD</span>
       </div>
+
+      <!-- TOP CENTER VIEWER ZOOM CONTROLS -->
+      <div class="viewer-zoom-dock" id="viewerZoomDock" style="display:none;" role="toolbar" aria-label="Document zoom controls">
+        <button class="zoom-btn" id="zoomOutBtn" type="button" title="Zoom Out (Ctrl -)" aria-label="Zoom Out">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+        <button class="zoom-level-btn" id="zoomResetBtn" type="button" title="Reset Zoom to 100% (Ctrl 0)" aria-label="Reset zoom">
+          <span id="zoomLevelText">100%</span>
+        </button>
+        <button class="zoom-btn" id="zoomInBtn" type="button" title="Zoom In (Ctrl +)" aria-label="Zoom In">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+        <div class="zoom-divider"></div>
+        <button class="zoom-btn" id="zoomFitBtn" type="button" title="Fit to width" aria-label="Fit to width">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+        </button>
+      </div>
+
       <div class="restricted-lock-wrap" id="restrictedBadge" style="display:none;" role="button" tabindex="0" aria-label="Restricted file notification">
         <button class="restricted-lock-btn" id="restrictedLockBtn" type="button" aria-label="Restricted file info">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -1626,23 +1675,6 @@
 
     <div class="viewer-body" id="pptContainer" style="display:none;">
       <div class="viewer-body-scroll" id="pptPages"></div>
-    </div>
-
-    <!-- FLOATING VIEWER ZOOM CONTROLS -->
-    <div class="viewer-zoom-dock" id="viewerZoomDock" style="display:none;" role="toolbar" aria-label="Document zoom controls">
-      <button class="zoom-btn" id="zoomOutBtn" type="button" title="Zoom Out (Ctrl -)" aria-label="Zoom Out">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      </button>
-      <button class="zoom-level-btn" id="zoomResetBtn" type="button" title="Reset Zoom to 100% (Ctrl 0)" aria-label="Reset zoom">
-        <span id="zoomLevelText">100%</span>
-      </button>
-      <button class="zoom-btn" id="zoomInBtn" type="button" title="Zoom In (Ctrl +)" aria-label="Zoom In">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      </button>
-      <div class="zoom-divider"></div>
-      <button class="zoom-btn" id="zoomFitBtn" type="button" title="Fit to width" aria-label="Fit to width">
-        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
-      </button>
     </div>
   </div>
 
