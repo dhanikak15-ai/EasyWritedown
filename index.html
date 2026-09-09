@@ -866,6 +866,15 @@
       box-shadow: 0 4px 32px rgba(0, 0, 0, 0.5);
     }
 
+    .page-lazy-placeholder {
+      width: 100%;
+      max-width: 860px;
+      aspect-ratio: 8.5 / 11;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: var(--surface);
+    }
+
     .viewer-loading {
       position: fixed;
       inset: 0;
@@ -1175,7 +1184,58 @@
       border: 1px solid var(--border);
       box-shadow: var(--shadow);
       background: #ffffff;
+      max-width: 100%;
+      animation: fadeInPage 0.25s ease-out;
+    }
+    #pdfContainer .slide-card-wrap .page-canvas {
       max-width: 860px;
+    }
+    .page-lazy-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+      min-height: 240px;
+    }
+    .page-lazy-placeholder::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent 0%, rgba(128, 128, 128, 0.05) 50%, transparent 100%);
+      animation: placeholder-shimmer 1.8s infinite;
+    }
+    @keyframes placeholder-shimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+    @keyframes fadeInPage {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .lazy-page-inner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      color: var(--text-muted);
+      font-size: 0.84rem;
+      font-weight: 500;
+      z-index: 1;
+    }
+    .lazy-page-spinner {
+      width: 22px;
+      height: 22px;
+      border: 2px solid var(--border);
+      border-top-color: var(--text);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
     }
     .canvas-shield {
       position: absolute;
@@ -2097,27 +2157,36 @@
 
         const scale = window.innerWidth < 600 ? 1.0 : window.innerWidth < 900 ? 1.4 : 1.8;
 
-        for (let i = 1; i <= total; i++) {
-          const page = await pdfDoc.getPage(i);
-          const viewport = page.getViewport({ scale });
+        // Fetch page 1 upfront to establish accurate aspect ratio and dimensions for all placeholders
+        let defaultAspectRatio = 0.772; // Standard Letter / A4 fallback
+        let firstPage = null;
+        try {
+          firstPage = await pdfDoc.getPage(1);
+          const firstViewport = firstPage.getViewport({ scale });
+          defaultAspectRatio = firstViewport.width / firstViewport.height;
+        } catch (e) {
+          console.warn('Could not prefetch page 1 viewport:', e);
+        }
 
+        const maxDisplayWidth = Math.min(window.innerWidth - 32, 860);
+
+        const pageWraps = [];
+        for (let i = 1; i <= total; i++) {
           const pageWrap = document.createElement('div');
           pageWrap.className = 'slide-card-wrap';
+          pageWrap.dataset.pageNumber = i;
 
-          const canvas = document.createElement('canvas');
-          canvas.className = 'page-canvas';
-          canvas.width = viewport.width;
-          canvas.height = viewport.height;
-          await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-
-          pageWrap.appendChild(canvas);
-
-          if (viewMode === 'restricted') {
-            const shield = document.createElement('div');
-            shield.className = 'canvas-shield';
-            shield.addEventListener('contextmenu', e => e.preventDefault());
-            pageWrap.appendChild(shield);
-          }
+          const placeholder = document.createElement('div');
+          placeholder.className = 'page-lazy-placeholder';
+          placeholder.style.maxWidth = `${maxDisplayWidth}px`;
+          placeholder.style.aspectRatio = `${defaultAspectRatio}`;
+          placeholder.innerHTML = `
+            <div class="lazy-page-inner">
+              <div class="lazy-page-spinner"></div>
+              <span>Page ${i}</span>
+            </div>
+          `;
+          pageWrap.appendChild(placeholder);
 
           const lbl = document.createElement('div');
           lbl.className = 'page-counter';
@@ -2125,9 +2194,65 @@
           pageWrap.appendChild(lbl);
 
           pdfPages.appendChild(pageWrap);
-
-          if (i === 1) viewerLoading.style.display = 'none';
+          pageWraps.push(pageWrap);
         }
+
+        const renderPage = async (pageWrap, pageNumber) => {
+          if (pageWrap.dataset.rendered === 'true' || pageWrap.dataset.rendering === 'true') return;
+          pageWrap.dataset.rendering = 'true';
+
+          try {
+            const page = (pageNumber === 1 && firstPage) ? firstPage : await pdfDoc.getPage(pageNumber);
+            const viewport = page.getViewport({ scale });
+            const canvas = document.createElement('canvas');
+            canvas.className = 'page-canvas';
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            canvas.style.aspectRatio = `${viewport.width} / ${viewport.height}`;
+            canvas.style.maxWidth = `${maxDisplayWidth}px`;
+            canvas.style.width = '100%';
+            await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+
+            const existingPlaceholder = pageWrap.querySelector('.page-lazy-placeholder');
+            if (existingPlaceholder) {
+              pageWrap.replaceChild(canvas, existingPlaceholder);
+            } else {
+              pageWrap.insertBefore(canvas, pageWrap.firstElementChild);
+            }
+
+            if (viewMode === 'restricted') {
+              const shield = document.createElement('div');
+              shield.className = 'canvas-shield';
+              shield.addEventListener('contextmenu', e => e.preventDefault());
+              pageWrap.insertBefore(shield, pageWrap.lastElementChild);
+            }
+
+            pageWrap.dataset.rendered = 'true';
+          } catch (pageError) {
+            console.error(`PDF page ${pageNumber} render error:`, pageError);
+          } finally {
+            delete pageWrap.dataset.rendering;
+          }
+        };
+
+        const pageObserver = new IntersectionObserver(entries => {
+          entries.forEach(entry => {
+            if (!entry.isIntersecting) return;
+            const pageWrap = entry.target;
+            pageObserver.unobserve(pageWrap);
+            renderPage(pageWrap, Number(pageWrap.dataset.pageNumber));
+          });
+        }, { rootMargin: '400px 0px' });
+
+        pageWraps.forEach(pageWrap => pageObserver.observe(pageWrap));
+
+        // Immediately render the first few pages upfront (up to 2) so the document opens instantly
+        const initialPages = Math.min(2, total);
+        for (let i = 1; i <= initialPages; i++) {
+          pageObserver.unobserve(pageWraps[i - 1]);
+          await renderPage(pageWraps[i - 1], i);
+        }
+
         viewerLoading.style.display = 'none';
       } catch (err) {
         console.error('PDF render error:', err);
@@ -2191,37 +2316,84 @@
         const renderWidth = Math.round(maxDisplayWidth * 1.5);
         const renderHeight = Math.round(displayHeight * 1.5);
 
+        const slideWraps = [];
         for (let i = 0; i < total; i++) {
           const slideWrap = document.createElement('div');
           slideWrap.className = 'slide-card-wrap';
+          slideWrap.dataset.slideNumber = i;
 
-          const canvas = document.createElement('canvas');
-          canvas.className = 'page-canvas slide-canvas';
-          canvas.width = renderWidth;
-          canvas.height = renderHeight;
-          canvas.style.width = '100%';
-          canvas.style.maxWidth = `${maxDisplayWidth}px`;
-          canvas.style.aspectRatio = `${aspectRatio}`;
-
-          const shield = document.createElement('div');
-          shield.className = 'canvas-shield';
-          shield.addEventListener('contextmenu', e => e.preventDefault());
-
-          await PPTXViewer.renderSlideToCanvas(presentation, i, canvas);
+          const placeholder = document.createElement('div');
+          placeholder.className = 'page-lazy-placeholder';
+          placeholder.style.maxWidth = `${maxDisplayWidth}px`;
+          placeholder.style.aspectRatio = `${aspectRatio}`;
+          placeholder.innerHTML = `
+            <div class="lazy-page-inner">
+              <div class="lazy-page-spinner"></div>
+              <span>Slide ${i + 1}</span>
+            </div>
+          `;
+          slideWrap.appendChild(placeholder);
 
           const lbl = document.createElement('div');
           lbl.className = 'page-counter';
           lbl.textContent = `Slide ${i + 1} of ${total}`;
 
-          slideWrap.appendChild(canvas);
-          slideWrap.appendChild(shield);
           slideWrap.appendChild(lbl);
           pptPages.appendChild(slideWrap);
-
-          if (i === 0) {
-            viewerLoading.style.display = 'none';
-          }
+          slideWraps.push(slideWrap);
         }
+
+        const renderSlide = async (slideWrap, slideNumber) => {
+          if (slideWrap.dataset.rendered === 'true' || slideWrap.dataset.rendering === 'true') return;
+          slideWrap.dataset.rendering = 'true';
+
+          try {
+            const canvas = document.createElement('canvas');
+            canvas.className = 'page-canvas slide-canvas';
+            canvas.width = renderWidth;
+            canvas.height = renderHeight;
+            canvas.style.width = '100%';
+            canvas.style.maxWidth = `${maxDisplayWidth}px`;
+            canvas.style.aspectRatio = `${aspectRatio}`;
+
+            const shield = document.createElement('div');
+            shield.className = 'canvas-shield';
+            shield.addEventListener('contextmenu', e => e.preventDefault());
+
+            await PPTXViewer.renderSlideToCanvas(presentation, slideNumber, canvas);
+            const existingPlaceholder = slideWrap.querySelector('.page-lazy-placeholder');
+            if (existingPlaceholder) {
+              slideWrap.replaceChild(canvas, existingPlaceholder);
+            } else {
+              slideWrap.insertBefore(canvas, slideWrap.firstElementChild);
+            }
+            slideWrap.insertBefore(shield, slideWrap.lastElementChild);
+            slideWrap.dataset.rendered = 'true';
+          } catch (slideError) {
+            console.error(`PPTX slide ${slideNumber + 1} render error:`, slideError);
+          } finally {
+            delete slideWrap.dataset.rendering;
+          }
+        };
+
+        const slideObserver = new IntersectionObserver(entries => {
+          entries.forEach(entry => {
+            if (!entry.isIntersecting) return;
+            const slideWrap = entry.target;
+            slideObserver.unobserve(slideWrap);
+            renderSlide(slideWrap, Number(slideWrap.dataset.slideNumber));
+          });
+        }, { rootMargin: '400px 0px' });
+
+        slideWraps.forEach(slideWrap => slideObserver.observe(slideWrap));
+
+        // Immediately render first few slides upfront (up to 2) so presentation opens instantly
+        const initialSlides = Math.min(2, total);
+        for (let i = 0; i < initialSlides; i++) {
+          slideObserver.unobserve(slideWraps[i]);
+          await renderSlide(slideWraps[i], i);
+        }
+
         viewerLoading.style.display = 'none';
       } catch (err) {
         console.error('Restricted PPTX error:', err);
