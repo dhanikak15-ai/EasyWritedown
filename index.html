@@ -852,6 +852,10 @@
       gap: 16px;
     }
 
+    #pdfContainer .viewer-body-scroll {
+      max-width: 860px;
+    }
+
     .page-canvas {
       display: block;
       border: 1px solid var(--border);
@@ -1065,7 +1069,10 @@
 
     /* ── Restricted Viewer Black Lock Button & Tooltip ── */
     .restricted-lock-wrap {
-      position: relative;
+      position: fixed;
+      top: 17px;
+      right: 76px;
+      z-index: 200;
       display: inline-flex;
       align-items: center;
     }
@@ -1168,7 +1175,7 @@
       border: 1px solid var(--border);
       box-shadow: var(--shadow);
       background: #ffffff;
-      max-width: 100%;
+      max-width: 860px;
     }
     .canvas-shield {
       position: absolute;
@@ -1272,6 +1279,11 @@
 
       #viewerScreen ~ .theme-toggle {
         top: 14px;
+      }
+
+      .restricted-lock-wrap {
+        top: 17px;
+        right: 62px;
       }
 
       .options-grid {
