@@ -1387,10 +1387,17 @@
       z-index: 100;
       min-height: 62px;
       box-sizing: border-box;
+      /* needed so zoom dock absolute centering is contained in header */
+      position: sticky;
+      isolation: isolate;
     }
 
     /* ── Top Center Document Zoom Controls ─────────────────── */
     .viewer-zoom-dock {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
       display: inline-flex;
       align-items: center;
       gap: 3px;
@@ -1402,6 +1409,8 @@
       user-select: none;
       transition: background var(--transition);
       pointer-events: auto !important;
+      /* ensure it never escapes header bounds */
+      max-width: calc(100% - 280px);
     }
 
     body.restricted-mode .viewer-zoom-dock,
@@ -1477,21 +1486,46 @@
 
     @media (max-width: 600px) {
       .viewer-header {
-        padding: 12px 16px;
+        padding: 10px 14px;
       }
       .viewer-zoom-dock {
-        padding: 2px 4px;
-        gap: 2px;
+        padding: 2px 3px;
+        gap: 1px;
+        max-width: calc(100% - 200px);
       }
       .zoom-btn {
-        width: 26px;
-        height: 26px;
+        width: 24px;
+        height: 24px;
+        font-size: 0.85rem;
       }
       .zoom-level-btn {
-        min-width: 42px;
-        font-size: 0.74rem;
-        padding: 0 4px;
-        height: 26px;
+        min-width: 36px;
+        font-size: 0.7rem;
+        padding: 0 3px;
+        height: 24px;
+      }
+      .zoom-divider {
+        height: 12px;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .viewer-zoom-dock {
+        max-width: calc(100% - 160px);
+        padding: 1px 2px;
+        gap: 0px;
+      }
+      .zoom-btn {
+        width: 22px;
+        height: 22px;
+      }
+      /* hide fit-to-width btn on very small screens */
+      #zoomFitBtn { display: none; }
+      .zoom-divider { display: none; }
+      .zoom-level-btn {
+        min-width: 32px;
+        font-size: 0.68rem;
+        height: 22px;
       }
     }
 
